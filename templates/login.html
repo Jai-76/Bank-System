@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Login – NexBank Loan Prediction{% endblock %}
-{% block meta_desc %}Securely login to your NexBank loan prediction account.{% endblock %}
+{% block title %}Login – Loan Prediction{% endblock %}
+{% block meta_desc %}Securely login to your loan prediction account.{% endblock %}
 
 {% block content %}
 <div class="auth-page">
@@ -10,7 +10,7 @@
         NB
       </div>
       <h2>Welcome Back</h2>
-      <p>Login to manage your loan applications, track status, and access all NexBank services.</p>
+      <p>Login to manage your loan applications, track status, and access all services.</p>
       <ul class="auth-benefits">
         <li>✓ Track your loan application status</li>
         <li>✓ View approved loan details & EMI schedule</li>
@@ -60,7 +60,7 @@
       </form>
 
       <div class="auth-divider"><span>or</span></div>
-      <p class="auth-register-link">New to NexBank? <a href="{{ url_for('register') }}">Create your account →</a></p>
+      <p class="auth-register-link">Don't have an account? <a href="{{ url_for('register') }}">Create your account →</a></p>
     </div>
   </div>
 </div>

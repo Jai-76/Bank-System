@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}NexBank – Loan Prediction{% endblock %}</title>
-  <meta name="description" content="{% block meta_desc %}Apply for personal and car loans instantly with NexBank's AI-powered loan prediction platform.{% endblock %}" />
+  <title>{% block title %}Loan Prediction{% endblock %}</title>
+  <meta name="description" content="{% block meta_desc %}Apply for personal and car loans instantly with our AI-powered loan prediction platform.{% endblock %}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <style>
-    /* ── NexBank Rebrand Overrides ─────────────────────────────────── */
+    /* ── Base Overrides ──────────────────────────────────────── */
     :root {
       --primary: #1a1f6e;
       --primary-dark: #0f1347;
@@ -158,10 +158,10 @@
 <nav class="navbar">
   <div class="nav-container">
     <a href="{{ url_for('index') }}" class="nav-brand">
-      <div class="brand-logo-mark">NB</div>
+      <div class="brand-logo-mark">LP</div>
       <div class="brand-info">
-        <span class="brand-name-text">NexBank</span>
-        <span class="brand-tagline">Loan Prediction</span>
+        <span class="brand-name-text">Loan Prediction</span>
+        <span class="brand-tagline">AI Powered</span>
       </div>
     </a>
 
@@ -216,8 +216,8 @@
   <div class="footer-container">
     <div class="footer-top">
       <div class="footer-brand">
-        <div class="footer-brand-logo">NB</div>
-        <div class="footer-brand-name">NexBank</div>
+        <div class="footer-brand-logo">LP</div>
+        <div class="footer-brand-name">Loan Prediction</div>
         <p class="footer-desc">AI-powered loan prediction platform. Get instant eligibility results with smart credit analysis.</p>
       </div>
       <div class="footer-links-grid">
@@ -248,7 +248,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© 2024 NexBank Ltd. All rights reserved. | Demo Application.</p>
+      <p>© 2024 Loan Prediction. All rights reserved. | Demo Application.</p>
       <div class="footer-badges">
         <span>🔒 256-bit SSL</span>
         <span>RBI Regulated</span>

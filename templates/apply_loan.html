@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Apply for Loan – Step 1 | HDFC Bank{% endblock %}
+
+{% block content %}
+<div class="wizard-page">
+  <!-- Progress Bar -->
+  <div class="wizard-progress-bar">
+    <div class="progress-container">
+      <div class="progress-step active" data-step="1">
+        <div class="step-circle">1</div>
+        <span>Loan Details</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="2">
+        <div class="step-circle">2</div>
+        <span>CIBIL Check</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="3">
+        <div class="step-circle">3</div>
+        <span>Documents</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="4">
+        <div class="step-circle">✓</div>
+        <span>Result</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <h1>Loan Application</h1>
+      <p>Step 1 of 3 — Enter your personal & loan details</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('apply_loan') }}" class="wizard-form" id="loanForm">
+      <!-- Personal Information -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">👤</span>
+          Personal Information
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label required">Full Name (as per PAN)</label>
+            <input type="text" name="full_name" class="form-control" placeholder="Rahul Kumar Sharma" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">PAN Number</label>
+            <input type="text" name="pan_number" class="form-control pan-input" placeholder="ABCDE1234F" maxlength="10" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Date of Birth</label>
+            <input type="date" name="date_of_birth" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Employment Type</label>
+            <select name="employment_type" class="form-control form-select" required id="emp-type">
+              <option value="">— Select —</option>
+              <option value="salaried_government">Salaried – Government</option>
+              <option value="salaried_private">Salaried – Private</option>
+              <option value="self_employed">Self Employed</option>
+              <option value="business">Business Owner</option>
+              <option value="freelancer">Freelancer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label required" id="employer-label">Employer / Company Name</label>
+            <input type="text" name="employer_name" class="form-control" placeholder="ABC Technologies Pvt. Ltd." required />
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Annual Income (₹)</label>
+            <div class="input-prefix-wrapper">
+              <span class="input-prefix">₹</span>
+              <input type="number" name="annual_income" class="form-control" placeholder="600000" min="100000" required id="annual-income" />
+            </div>
+            <small class="form-hint">Gross annual income before tax</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loan Details -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">💰</span>
+          Loan Details
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label required">Loan Type</label>
+            <select name="loan_type" class="form-control form-select" required>
+              <option value="">— Select Loan Type —</option>
+              <option value="personal">Personal Loan</option>
+              <option value="car">Car Loan</option>
+              <option value="education">Education Loan</option>
+              <option value="business">Business Loan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Loan Amount (₹)</label>
+            <div class="input-prefix-wrapper">
+              <span class="input-prefix">₹</span>
+              <input type="number" name="loan_amount" class="form-control" placeholder="500000" min="50000" max="50000000" required id="loan-amount" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Repayment Tenure</label>
+            <select name="tenure_months" class="form-control form-select" required id="tenure">
+              <option value="">— Select Tenure —</option>
+              <option value="12">12 Months (1 Year)</option>
+              <option value="24">24 Months (2 Years)</option>
+              <option value="36">36 Months (3 Years)</option>
+              <option value="48">48 Months (4 Years)</option>
+              <option value="60">60 Months (5 Years)</option>
+              <option value="84">84 Months (7 Years)</option>
+              <option value="120">120 Months (10 Years)</option>
+              <option value="180">180 Months (15 Years)</option>
+              <option value="240">240 Months (20 Years)</option>
+              <option value="360">360 Months (30 Years)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Purpose of Loan</label>
+            <input type="text" name="purpose" class="form-control" placeholder="Home renovation, medical, education..." required />
+          </div>
+        </div>
+
+        <!-- Live EMI Preview -->
+        <div class="emi-preview" id="emi-preview" style="display:none">
+          <div class="emi-preview-label">Estimated Monthly EMI</div>
+          <div class="emi-preview-value" id="preview-emi">₹–</div>
+          <small>at ~10.5% p.a. (actual rate determined after CIBIL check)</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-ghost">← Back to Home</a>
+        <button type="submit" class="btn btn-primary btn-lg" id="step1-submit">
+          Continue to CIBIL Check <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // PAN uppercase
+  document.querySelector('.pan-input').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+  });
+
+  // Live EMI preview
+  function updateEmiPreview() {
+    const amount = parseFloat(document.getElementById('loan-amount').value || 0);
+    const tenureEl = document.getElementById('tenure');
+    const n = parseInt(tenureEl.value || 0);
+    if (!amount || !n) { document.getElementById('emi-preview').style.display = 'none'; return; }
+    const r = 10.5 / 100 / 12;
+    const emi = (amount * r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
+    document.getElementById('preview-emi').textContent = '₹' + Math.round(emi).toLocaleString('en-IN');
+    document.getElementById('emi-preview').style.display = 'flex';
+  }
+
+  document.getElementById('loan-amount').addEventListener('input', updateEmiPreview);
+  document.getElementById('tenure').addEventListener('change', updateEmiPreview);
+
+  // Employer label
+  const empType = document.getElementById('emp-type');
+  const empLabel = document.getElementById('employer-label');
+  empType.addEventListener('change', function() {
+    const labels = {
+      'salaried_government': 'Government Employer Name',
+      'salaried_private': 'Company / Employer Name',
+      'self_employed': 'Profession / Business Name',
+      'business': 'Business Name',
+      'freelancer': 'Primary Client / Platform'
+    };
+    empLabel.textContent = labels[this.value] || 'Employer / Company Name';
+  });
+</script>
+{% endblock %}

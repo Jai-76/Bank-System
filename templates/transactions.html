@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Transaction History – NexaBank{% endblock %}
+
+{% block content %}
+<div class="transactions-page">
+  <div class="transactions-container">
+
+    <!-- Header -->
+    <div class="txn-page-header">
+      <div>
+        <h1>📄 Transaction History</h1>
+        <p>All your money transfers and account activity</p>
+      </div>
+      <a href="{{ url_for('transfer') }}" class="btn btn-primary" id="new-transfer-btn">
+        + New Transfer
+      </a>
+    </div>
+
+    <!-- Account Balance Card -->
+    <div class="txn-account-bar">
+      <div class="txn-acc-info">
+        <span class="txn-acc-label">Savings Account</span>
+        <span class="txn-acc-number">A/c {{ account.account_number[:4] }}•••• ••••{{ account.account_number[-4:] }}</span>
+      </div>
+      <div class="txn-bal-info">
+        <span class="txn-bal-label">Available Balance</span>
+        <span class="txn-bal-value">₹{{ "{:,.2f}".format(account.balance) }}</span>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="txn-filter-bar">
+      <div class="txn-filter-tabs">
+        <button class="filter-tab active" data-filter="all" id="filter-all">All</button>
+        <button class="filter-tab" data-filter="debit" id="filter-debit">Debited</button>
+        <button class="filter-tab" data-filter="credit" id="filter-credit">Credited</button>
+      </div>
+      <div class="txn-search">
+        <input type="text" id="txn-search" class="form-control" placeholder="🔍  Search by name or TXN ID..." style="max-width:280px" />
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    {% if not transactions %}
+    <div class="empty-state" style="margin-top:32px">
+      <div class="empty-icon">💸</div>
+      <h3>No Transactions Yet</h3>
+      <p>Your transaction history will appear here after your first transfer.</p>
+      <a href="{{ url_for('transfer') }}" class="btn btn-primary">Make Your First Transfer</a>
+    </div>
+    {% else %}
+    <div class="txn-table-wrapper">
+      <table class="txn-table" id="txn-table">
+        <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>Transaction ID</th>
+            <th>Beneficiary / Sender</th>
+            <th>Type</th>
+            <th>Remarks</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="txn-tbody">
+          {% for item in transactions %}
+          <tr class="txn-row" data-direction="{{ item.direction }}" data-name="{{ item.other_party|lower }}" data-txnid="{{ item.txn.transaction_id|lower }}">
+            <td class="txn-date">
+              <span class="date-main">{{ item.txn.created_at.strftime('%d %b %Y') }}</span>
+              <span class="date-time">{{ item.txn.created_at.strftime('%I:%M %p') }}</span>
+            </td>
+            <td class="txn-id">
+              <span class="txn-id-badge">{{ item.txn.transaction_id }}</span>
+            </td>
+            <td class="txn-party">
+              <div class="party-avatar">{{ item.other_party[0].upper() if item.other_party else '?' }}</div>
+              <div>
+                <span class="party-name">{{ item.other_party or 'Unknown' }}</span>
+                <span class="party-acc">{{ item.other_acc }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="txn-type-badge">{{ item.txn.remarks or item.txn.transaction_type }}</span>
+            </td>
+            <td class="txn-remarks">{{ item.txn.remarks or '—' }}</td>
+            <td class="txn-amount {{ item.direction }}">
+              {% if item.direction == 'debit' %}
+                <span class="amount-debit">− ₹{{ "{:,.2f}".format(item.txn.amount) }}</span>
+              {% else %}
+                <span class="amount-credit">+ ₹{{ "{:,.2f}".format(item.txn.amount) }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="txn-status {{ item.txn.status }}">
+                {% if item.txn.status == 'success' %}✓ Success
+                {% elif item.txn.status == 'failed' %}✕ Failed
+                {% else %}⏳ Pending{% endif %}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary Row -->
+    <div class="txn-summary-bar">
+      {% set total_debit = namespace(val=0) %}
+      {% set total_credit = namespace(val=0) %}
+      {% for item in transactions %}
+        {% if item.direction == 'debit' %}{% set total_debit.val = total_debit.val + item.txn.amount %}
+        {% else %}{% set total_credit.val = total_credit.val + item.txn.amount %}{% endif %}
+      {% endfor %}
+      <div class="summary-stat">
+        <span class="summary-label">Total Transactions</span>
+        <span class="summary-val">{{ transactions|length }}</span>
+      </div>
+      <div class="summary-stat">
+        <span class="summary-label">Total Debited</span>
+        <span class="summary-val debit-col">₹{{ "{:,.2f}".format(total_debit.val) }}</span>
+      </div>
+      <div class="summary-stat">
+        <span class="summary-label">Total Credited</span>
+        <span class="summary-val credit-col">₹{{ "{:,.2f}".format(total_credit.val) }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Filter tabs
+  document.querySelectorAll('.txn-filter-bar .filter-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.txn-filter-bar .filter-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      const filter = this.dataset.filter;
+      document.querySelectorAll('.txn-row').forEach(row => {
+        row.style.display = (filter === 'all' || row.dataset.direction === filter) ? '' : 'none';
+      });
+    });
+  });
+
+  // Search
+  document.getElementById('txn-search')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.txn-row').forEach(row => {
+      const match = row.dataset.name.includes(q) || row.dataset.txnid.includes(q);
+      row.style.display = match ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}NexBank – Loan Prediction{% endblock %}</title>
+  <meta name="description" content="{% block meta_desc %}Apply for personal and car loans instantly with NexBank's AI-powered loan prediction platform.{% endblock %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    /* ── NexBank Rebrand Overrides ─────────────────────────────────── */
+    :root {
+      --primary: #1a1f6e;
+      --primary-dark: #0f1347;
+      --accent: #4f46e5;
+      --accent-light: #6366f1;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg: #f8fafc;
+      --bg-card: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 24px rgba(79,70,229,0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+    /* ── Navbar ─────────────────────────────────────────────────────── */
+    .navbar {
+      position: sticky; top: 0; z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 68px;
+      display: flex; align-items: center;
+      box-shadow: 0 1px 16px rgba(79,70,229,0.06);
+    }
+    .nav-container {
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: inherit;
+    }
+    .brand-logo-mark {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px; color: #fff; letter-spacing: -1px;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    }
+    .brand-info { display: flex; flex-direction: column; }
+    .brand-name-text { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; line-height: 1; }
+    .brand-tagline { font-size: 10px; font-weight: 500; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-link {
+      padding: 8px 14px; border-radius: 8px;
+      font-size: 14px; font-weight: 500; color: var(--text-muted);
+      text-decoration: none; transition: all 0.2s;
+    }
+    .nav-link:hover, .nav-link.active { color: var(--accent); background: rgba(79,70,229,0.06); }
+    .nav-link-cta {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: #fff !important; padding: 8px 18px; border-radius: 8px; font-weight: 600;
+      box-shadow: 0 2px 10px rgba(79,70,229,0.25); transition: all 0.2s;
+    }
+    .nav-link-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,70,229,0.35); background: none; background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%); }
+
+    .nav-user { position: relative; cursor: pointer; }
+    .user-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    .user-dropdown {
+      position: absolute; right: 0; top: calc(100% + 10px);
+      background: #fff; border-radius: 12px; min-width: 160px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid var(--border);
+      padding: 8px; display: none; flex-direction: column;
+    }
+    .nav-user:hover .user-dropdown { display: flex; }
+    .user-name { padding: 8px 12px; font-size: 13px; font-weight: 600; color: var(--text); border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .dropdown-item { padding: 8px 12px; font-size: 13px; color: var(--danger); text-decoration: none; border-radius: 8px; }
+    .dropdown-item:hover { background: rgba(239,68,68,0.06); }
+
+    .nav-toggle { display: none; background: none; border: none; cursor: pointer; flex-direction: column; gap: 5px; padding: 4px; }
+    .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: 0.3s; }
+
+    /* ── Flash Messages ─────────────────────────────────────────────── */
+    .flash-container { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 380px; }
+    .flash {
+      display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+      border-radius: 12px; font-size: 14px; font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12); animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+    .flash-success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
+    .flash-danger  { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+    .flash-warning { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+    .flash-info    { background: #eff6ff; border: 1px solid #93c5fd; color: #1e40af; }
+    .flash-icon { font-size: 16px; flex-shrink: 0; }
+    .flash-close { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 18px; opacity: 0.5; padding: 0 4px; }
+    .flash-close:hover { opacity: 1; }
+
+    /* ── Main Content ──────────────────────────────────────────────── */
+    .main-content { min-height: calc(100vh - 68px - 200px); }
+
+    /* ── Footer ────────────────────────────────────────────────────── */
+    .footer {
+      background: var(--primary-dark); color: rgba(255,255,255,0.7);
+      padding: 48px 24px 24px;
+    }
+    .footer-container { max-width: 1200px; margin: 0 auto; }
+    .footer-top { display: grid; grid-template-columns: 1fr 2fr; gap: 48px; margin-bottom: 40px; }
+    .footer-brand-logo {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 20px; color: #fff; margin-bottom: 14px;
+    }
+    .footer-brand-name { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .footer-desc { font-size: 13px; line-height: 1.7; max-width: 280px; }
+    .footer-links-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .footer-col h4 { font-size: 13px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 8px; }
+    .footer-col ul li a { font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; transition: color 0.2s; }
+    .footer-col ul li a:hover { color: #fff; }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .footer-bottom p { font-size: 12px; }
+    .footer-badges { display: flex; gap: 10px; }
+    .footer-badges span { font-size: 11px; background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; flex-direction: column; position: absolute; top: 68px; left: 0; right: 0; background: #fff; padding: 16px; border-bottom: 1px solid var(--border); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+      .nav-links.open { display: flex; }
+      .nav-toggle { display: flex; }
+      .footer-top { grid-template-columns: 1fr; gap: 32px; }
+      .footer-links-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ─────────────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="{{ url_for('index') }}" class="nav-brand">
+      <div class="brand-logo-mark">NB</div>
+      <div class="brand-info">
+        <span class="brand-name-text">NexBank</span>
+        <span class="brand-tagline">Loan Prediction</span>
+      </div>
+    </a>
+
+    <div class="nav-links" id="navLinks">
+      <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Home</a>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">My Loans</a>
+        <a href="{{ url_for('apply_loan') }}" class="nav-link nav-link-cta">Apply Loan</a>
+        <div class="nav-user">
+          <div class="user-avatar">{{ current_user.full_name[0].upper() }}</div>
+          <div class="user-dropdown">
+            <span class="user-name">{{ current_user.full_name.split()[0] }}</span>
+            <a href="{{ url_for('logout') }}" class="dropdown-item">Logout →</a>
+          </div>
+        </div>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+        <a href="{{ url_for('register') }}" class="nav-link nav-link-cta">Get Started</a>
+      {% endif %}
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ── Flash Messages ─────────────────────────────────────────────────────── -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" role="alert">
+          <span class="flash-icon">
+            {% if category == 'success' %}✓{% elif category == 'danger' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
+          </span>
+          <span>{{ message }}</span>
+          <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ── Page Content ───────────────────────────────────────────────────────── -->
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ── Footer ────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-brand-logo">NB</div>
+        <div class="footer-brand-name">NexBank</div>
+        <p class="footer-desc">AI-powered loan prediction platform. Get instant eligibility results with smart credit analysis.</p>
+      </div>
+      <div class="footer-links-grid">
+        <div class="footer-col">
+          <h4>Loans</h4>
+          <ul>
+            <li><a href="#">Personal Loan</a></li>
+            <li><a href="#">Car Loan</a></li>
+            <li><a href="#">Education Loan</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('apply_loan') }}">Apply Now</a></li>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">1800-266-4332</a></li>
+            <li><a href="#">support@nexbank.com</a></li>
+            <li><a href="#">Branch Locator</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2024 NexBank Ltd. All rights reserved. | Demo Application.</p>
+      <div class="footer-badges">
+        <span>🔒 256-bit SSL</span>
+        <span>RBI Regulated</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  // Mobile nav toggle
+  document.getElementById('navToggle').addEventListener('click', function() {
+    document.getElementById('navLinks').classList.toggle('open');
+  });
+  // Auto-dismiss flash messages after 5s
+  setTimeout(() => {
+    document.querySelectorAll('.flash').forEach(el => el.remove());
+  }, 5000);
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

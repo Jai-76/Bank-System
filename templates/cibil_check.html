@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}CIBIL Score Check – Step 2 | HDFC Bank{% endblock %}
+
+{% block content %}
+<div class="wizard-page">
+  <!-- Progress Bar -->
+  <div class="wizard-progress-bar">
+    <div class="progress-container">
+      <div class="progress-step completed" data-step="1">
+        <div class="step-circle">✓</div>
+        <span>Loan Details</span>
+      </div>
+      <div class="progress-line filled"></div>
+      <div class="progress-step active" data-step="2">
+        <div class="step-circle">2</div>
+        <span>CIBIL Check</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="3">
+        <div class="step-circle">3</div>
+        <span>Documents</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="4">
+        <div class="step-circle">✓</div>
+        <span>Result</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <h1>CIBIL Score Verification</h1>
+      <p>Step 2 of 3 — Your credit score determines your loan eligibility</p>
+    </div>
+
+    <!-- CIBIL Info Banner -->
+    <div class="cibil-info-banner">
+      <div class="cibil-info-icon">📊</div>
+      <div class="cibil-info-text">
+        <strong>What is a CIBIL Score?</strong>
+        <p>A CIBIL score is a 3-digit number ranging from 300 to 900 that represents your creditworthiness. A higher score means better loan eligibility and lower interest rates.</p>
+      </div>
+    </div>
+
+    <!-- Score Ranges -->
+    <div class="cibil-ranges">
+      <div class="cibil-range-item poor">
+        <div class="range-bar poor-bar"></div>
+        <span class="range-label">300–549</span>
+        <span class="range-text">Poor</span>
+      </div>
+      <div class="cibil-range-item fair">
+        <div class="range-bar fair-bar"></div>
+        <span class="range-label">550–649</span>
+        <span class="range-text">Fair</span>
+      </div>
+      <div class="cibil-range-item good">
+        <div class="range-bar good-bar"></div>
+        <span class="range-label">650–749</span>
+        <span class="range-text">Good ✓</span>
+      </div>
+      <div class="cibil-range-item excellent">
+        <div class="range-bar excellent-bar"></div>
+        <span class="range-label">750–900</span>
+        <span class="range-text">Excellent ✓</span>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('cibil_check') }}" class="wizard-form" id="cibilForm">
+      <div class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">📊</span>
+          Enter Your CIBIL Score
+        </div>
+
+        <!-- Application Summary -->
+        <div class="app-summary">
+          <div class="summary-item">
+            <span class="summary-label">Loan Type</span>
+            <span class="summary-val">{{ loan_data.loan_type|capitalize if loan_data else '–' }} Loan</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Amount Requested</span>
+            <span class="summary-val">₹{{ "{:,.0f}".format(loan_data.loan_amount) if loan_data else '–' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Annual Income</span>
+            <span class="summary-val">₹{{ "{:,.0f}".format(loan_data.annual_income) if loan_data else '–' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Tenure</span>
+            <span class="summary-val">{{ loan_data.tenure_months if loan_data else '–' }} months</span>
+          </div>
+        </div>
+
+        <div class="cibil-input-wrapper">
+          <label class="form-label required" for="cibil_score">Your CIBIL / Credit Score</label>
+          <div class="cibil-input-container">
+            <input
+              type="number"
+              id="cibil_score"
+              name="cibil_score"
+              class="form-control cibil-input"
+              placeholder="e.g. 750"
+              min="300"
+              max="900"
+              required
+            />
+            <div class="cibil-meter" id="cibil-meter">
+              <div class="meter-bar" id="meter-bar"></div>
+            </div>
+            <div class="cibil-feedback" id="cibil-feedback">
+              <span id="cibil-status-text">Enter your score to check eligibility</span>
+              <span id="cibil-status-icon"></span>
+            </div>
+          </div>
+          <small class="form-hint">Score range: 300 (lowest) to 900 (highest). Minimum required: <strong>650</strong></small>
+        </div>
+
+        <div class="cibil-disclaimer">
+          <div class="disclaimer-icon">ℹ</div>
+          <p>Your CIBIL score can be obtained from <strong>CIBIL.com</strong>, Experian, Equifax, or CRIF High Mark. Please enter your actual credit score for accurate loan assessment.</p>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('apply_loan') }}" class="btn btn-ghost">← Edit Details</a>
+        <button type="submit" class="btn btn-primary btn-lg" id="cibil-submit">
+          Verify & Continue <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const scoreInput = document.getElementById('cibil_score');
+  const meterBar = document.getElementById('meter-bar');
+  const statusText = document.getElementById('cibil-status-text');
+  const statusIcon = document.getElementById('cibil-status-icon');
+  const submitBtn = document.getElementById('cibil-submit');
+
+  scoreInput.addEventListener('input', function() {
+    const score = parseInt(this.value) || 0;
+    if (score < 300 || score > 900) return;
+
+    const pct = ((score - 300) / 600) * 100;
+    meterBar.style.width = pct + '%';
+
+    if (score >= 750) {
+      meterBar.style.background = 'linear-gradient(90deg, #28a745, #20c997)';
+      statusText.textContent = 'Excellent! High approval probability.';
+      statusIcon.textContent = '🌟';
+      submitBtn.disabled = false;
+    } else if (score >= 700) {
+      meterBar.style.background = 'linear-gradient(90deg, #ffc107, #28a745)';
+      statusText.textContent = 'Good score! Likely to be approved.';
+      statusIcon.textContent = '✅';
+      submitBtn.disabled = false;
+    } else if (score >= 650) {
+      meterBar.style.background = 'linear-gradient(90deg, #fd7e14, #ffc107)';
+      statusText.textContent = 'Fair score. Approval possible with strong income.';
+      statusIcon.textContent = '⚠️';
+      submitBtn.disabled = false;
+    } else {
+      meterBar.style.background = 'linear-gradient(90deg, #E31837, #fd7e14)';
+      statusText.textContent = 'Score below 650. Application may be rejected.';
+      statusIcon.textContent = '❌';
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+{% endblock %}

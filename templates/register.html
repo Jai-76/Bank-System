@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Register – NexBank Loan Prediction{% endblock %}
+{% block meta_desc %}Create your NexBank account to apply for loans instantly and get AI-powered predictions.{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="brand-logo large" style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#1a1f6e,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:16px;">
+        NB
+      </div>
+      <h2>Join NexBank</h2>
+      <p>Create your account in minutes and start your loan journey today.</p>
+      <ul class="auth-benefits">
+        <li>✓ Apply for loans online in 3 simple steps</li>
+        <li>✓ Get instant loan decisions</li>
+        <li>✓ Track your application status 24/7</li>
+        <li>✓ Competitive interest rates from 8.5% p.a.</li>
+      </ul>
+      <div class="auth-security">
+        <span>🔒</span> Your data is protected with 256-bit SSL encryption
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-card">
+      <h1 class="auth-title">Create Your Account</h1>
+      <p class="auth-subtitle">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+
+      <form method="POST" action="{{ url_for('register') }}" class="auth-form" id="registerForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="full_name" class="form-label">Full Name</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Rahul Sharma" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <div class="input-wrapper">
+            <span class="input-icon">✉</span>
+            <input type="email" id="email" name="email" class="form-control" placeholder="rahul@example.com" required autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone" class="form-label">Mobile Number</label>
+          <div class="input-wrapper">
+            <span class="input-icon">📱</span>
+            <input type="tel" id="phone" name="phone" class="form-control" placeholder="+91 98765 43210" required pattern="[0-9+\s]{10,15}" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Min. 8 characters" required minlength="8" />
+            <button type="button" class="password-toggle" onclick="togglePassword('password')">👁</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password" class="form-label">Confirm Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter password" required />
+          </div>
+          <small id="pw-match-msg" class="form-hint"></small>
+        </div>
+
+        <div class="form-check">
+          <input type="checkbox" id="terms" name="terms" class="form-check-input" required />
+          <label for="terms" class="form-check-label">I agree to the <a href="#">Terms & Conditions</a> and <a href="#">Privacy Policy</a></label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="reg-btn">
+          Create Account
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function togglePassword(id) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+
+  const pw = document.getElementById('password');
+  const cpw = document.getElementById('confirm_password');
+  const msg = document.getElementById('pw-match-msg');
+
+  cpw.addEventListener('input', function() {
+    if (cpw.value.length === 0) { msg.textContent = ''; return; }
+    if (cpw.value === pw.value) {
+      msg.textContent = '✓ Passwords match';
+      msg.style.color = '#28a745';
+    } else {
+      msg.textContent = '✕ Passwords do not match';
+      msg.style.color = '#E31837';
+    }
+  });
+
+  document.getElementById('registerForm').addEventListener('submit', function(e) {
+    if (pw.value !== cpw.value) {
+      e.preventDefault();
+      msg.textContent = '✕ Passwords do not match';
+      msg.style.color = '#E31837';
+    }
+  });
+</script>
+{% endblock %}

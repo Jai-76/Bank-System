@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Money Transfer – NexaBank{% endblock %}
+{% block meta_desc %}Transfer money securely with NexaBank IMPS, NEFT, and RTGS.{% endblock %}
+
+{% block content %}
+<div class="transfer-page">
+  <div class="transfer-container">
+
+    <!-- Page Header -->
+    <div class="transfer-page-header">
+      <h1>💸 Money Transfer</h1>
+      <p>Send money instantly and securely via IMPS, NEFT or RTGS</p>
+    </div>
+
+    <div class="transfer-layout">
+
+      <!-- Left: Account Summary Card -->
+      <div class="transfer-sidebar">
+        <div class="account-summary-card">
+          <div class="account-card-header">
+            <span class="account-card-label">Savings Account</span>
+            <span class="account-card-type">{{ account.account_type.title() }}</span>
+          </div>
+          <div class="account-number-display">
+            <span class="acc-label">Account Number</span>
+            <span class="acc-number" id="accNumDisplay">
+              •••• •••• {{ account.account_number[-4:] }}
+            </span>
+            <button class="reveal-btn" id="revealBtn" onclick="revealAccount()">Show</button>
+          </div>
+          <div class="account-balance-display">
+            <span class="bal-label">Available Balance</span>
+            <span class="bal-amount">₹{{ "{:,.2f}".format(account.balance) }}</span>
+          </div>
+          <div class="account-meta">
+            <div class="meta-row">
+              <span>IFSC</span>
+              <span>{{ account.ifsc_code }}</span>
+            </div>
+            <div class="meta-row">
+              <span>Branch</span>
+              <span>{{ account.branch }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transfer Limits -->
+        <div class="limits-card">
+          <div class="limits-title">📋 Transfer Limits</div>
+          <div class="limit-row">
+            <span>IMPS</span><span>Up to ₹2,00,000</span>
+          </div>
+          <div class="limit-row">
+            <span>NEFT</span><span>No limit</span>
+          </div>
+          <div class="limit-row">
+            <span>RTGS</span><span>Min ₹2,00,000</span>
+          </div>
+          <div class="limit-row">
+            <span>Daily Limit</span><span>₹10,00,000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Transfer Form -->
+      <div class="transfer-form-wrapper">
+        <div class="transfer-form-card">
+          <div class="transfer-form-title">
+            <span>Send Money</span>
+            <div class="transfer-type-tabs">
+              <button class="type-tab active" data-type="IMPS" onclick="setType(this)">IMPS</button>
+              <button class="type-tab" data-type="NEFT" onclick="setType(this)">NEFT</button>
+              <button class="type-tab" data-type="RTGS" onclick="setType(this)">RTGS</button>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('transfer') }}" id="transferForm">
+            <input type="hidden" name="transfer_type" id="transfer_type_input" value="IMPS" />
+
+            <div class="form-section-transfer">
+              <div class="form-section-title">
+                <span class="section-icon">🏦</span> Beneficiary Details
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Beneficiary Account Number</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">🔢</span>
+                  <input type="text" name="receiver_account" id="receiver_account"
+                    class="form-control" placeholder="Enter 12-digit account number"
+                    maxlength="12" pattern="[0-9]{10,16}" required
+                    oninput="this.value=this.value.replace(/\D/g,'')" />
+                </div>
+                <div class="account-verify-status" id="verify-status"></div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Beneficiary Name</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">👤</span>
+                  <input type="text" name="receiver_name" id="receiver_name"
+                    class="form-control" placeholder="Full name of account holder" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section-transfer">
+              <div class="form-section-title">
+                <span class="section-icon">💰</span> Transfer Amount
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Amount (₹)</label>
+                <div class="amount-input-wrapper">
+                  <span class="amount-prefix">₹</span>
+                  <input type="number" name="amount" id="transfer_amount"
+                    class="form-control amount-input"
+                    placeholder="0.00" min="1" max="200000"
+                    step="0.01" required
+                    oninput="updateAmountPreview()" />
+                </div>
+                <div class="amount-quick-btns">
+                  <button type="button" class="quick-btn" onclick="setAmount(1000)">₹1K</button>
+                  <button type="button" class="quick-btn" onclick="setAmount(5000)">₹5K</button>
+                  <button type="button" class="quick-btn" onclick="setAmount(10000)">₹10K</button>
+                  <button type="button" class="quick-btn" onclick="setAmount(25000)">₹25K</button>
+                  <button type="button" class="quick-btn" onclick="setAmount(50000)">₹50K</button>
+                </div>
+                <div class="balance-hint">
+                  Available Balance: <strong>₹{{ "{:,.2f}".format(account.balance) }}</strong>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Remarks (Optional)</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">📝</span>
+                  <input type="text" name="remarks" class="form-control"
+                    placeholder="e.g. Rent payment, family transfer..."
+                    maxlength="100" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Transfer Summary Preview -->
+            <div class="transfer-preview" id="transfer-preview" style="display:none">
+              <div class="preview-title">📋 Transfer Summary</div>
+              <div class="preview-rows">
+                <div class="preview-row">
+                  <span>Amount</span>
+                  <span class="preview-amount" id="preview-amount">₹0</span>
+                </div>
+                <div class="preview-row">
+                  <span>Transfer Fee</span>
+                  <span class="preview-fee" id="preview-fee">₹0</span>
+                </div>
+                <div class="preview-row total-row">
+                  <span>Total Debit</span>
+                  <span class="preview-total" id="preview-total">₹0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="transfer-security-note">
+              <span>🔒</span>
+              <span>Your transfer is protected by 256-bit SSL encryption. Never share your OTP with anyone.</span>
+            </div>
+
+            <div class="form-actions">
+              <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Cancel</a>
+              <button type="submit" class="btn btn-primary btn-lg" id="transfer-submit-btn">
+                Send Money <span class="btn-arrow">→</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const fullAccNumber = "{{ account.account_number }}";
+  let revealed = false;
+
+  function revealAccount() {
+    const display = document.getElementById('accNumDisplay');
+    const btn = document.getElementById('revealBtn');
+    if (!revealed) {
+      display.textContent = fullAccNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
+      btn.textContent = 'Hide';
+      revealed = true;
+    } else {
+      display.textContent = '•••• •••• ' + fullAccNumber.slice(-4);
+      btn.textContent = 'Show';
+      revealed = false;
+    }
+  }
+
+  function setType(btn) {
+    document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('transfer_type_input').value = btn.dataset.type;
+  }
+
+  function setAmount(val) {
+    document.getElementById('transfer_amount').value = val;
+    updateAmountPreview();
+  }
+
+  // IMPS fee table
+  function getIMPSFee(amount) {
+    if (amount <= 10000) return 2.50;
+    if (amount <= 100000) return 5.00;
+    return 15.00;
+  }
+
+  function updateAmountPreview() {
+    const amount = parseFloat(document.getElementById('transfer_amount').value || 0);
+    const preview = document.getElementById('transfer-preview');
+    if (amount > 0) {
+      const fee = getIMPSFee(amount);
+      const total = amount + fee;
+      document.getElementById('preview-amount').textContent = '₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2});
+      document.getElementById('preview-fee').textContent = '₹' + fee.toFixed(2);
+      document.getElementById('preview-total').textContent = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2});
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  // Auto-verify account number
+  let verifyTimeout;
+  document.getElementById('receiver_account').addEventListener('input', function() {
+    clearTimeout(verifyTimeout);
+    const accNo = this.value;
+    const status = document.getElementById('verify-status');
+    const nameInput = document.getElementById('receiver_name');
+
+    if (accNo.length < 10) {
+      status.innerHTML = '';
+      return;
+    }
+    status.innerHTML = '<span class="verify-checking">⟳ Verifying account...</span>';
+    verifyTimeout = setTimeout(() => {
+      fetch('/validate-account', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({account_number: accNo})
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.valid) {
+          status.innerHTML = `<span class="verify-success">✓ Account verified – ${data.name}</span>`;
+          nameInput.value = data.name;
+          nameInput.readOnly = true;
+        } else {
+          status.innerHTML = `<span class="verify-fail">✕ ${data.error}</span>`;
+          nameInput.value = '';
+          nameInput.readOnly = false;
+        }
+      });
+    }, 600);
+  });
+
+  // Confirm before submit
+  document.getElementById('transferForm').addEventListener('submit', function(e) {
+    const amount = parseFloat(document.getElementById('transfer_amount').value || 0);
+    const name = document.getElementById('receiver_name').value;
+    const accNo = document.getElementById('receiver_account').value;
+    if (!confirm(`Confirm transfer of ₹${amount.toLocaleString('en-IN')} to ${name} (A/c: ${accNo})?`)) {
+      e.preventDefault();
+    }
+  });
+</script>
+{% endblock %}

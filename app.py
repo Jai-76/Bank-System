@@ -340,8 +340,10 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    loans = LoanApplication.query.filter_by(user_id=current_user.id)\
-                .order_by(LoanApplication.created_at.desc()).all()
+    loans = LoanApplication.query.filter(
+                LoanApplication.user_id == current_user.id,
+                LoanApplication.status != 'draft'
+            ).order_by(LoanApplication.created_at.desc()).all()
     return render_template('dashboard.html', loans=loans)
 
 
@@ -350,19 +352,38 @@ def dashboard():
 @login_required
 def apply_loan():
     if request.method == 'POST':
-        # Store step-1 data in session
-        session['loan_data'] = {
-            'full_name': request.form.get('full_name'),
-            'pan_number': request.form.get('pan_number').upper(),
-            'date_of_birth': request.form.get('date_of_birth'),
-            'employment_type': request.form.get('employment_type'),
-            'employer_name': request.form.get('employer_name'),
-            'annual_income': float(request.form.get('annual_income', 0)),
-            'loan_type': request.form.get('loan_type'),
-            'loan_amount': float(request.form.get('loan_amount', 0)),
-            'tenure_months': int(request.form.get('tenure_months', 12)),
-            'purpose': request.form.get('purpose'),
-        }
+        # Save step-1 data as a draft record in the DB.
+        # Storing large dicts in Flask's cookie session can silently exceed the
+        # 4 KB limit and drop the session, which logs the user out mid-flow.
+        # Keeping only a small integer ID in the session avoids this entirely.
+
+        # Delete any stale draft for this user before creating a new one
+        LoanApplication.query.filter_by(
+            user_id=current_user.id, status='draft'
+        ).delete()
+        db.session.flush()
+
+        app_id = generate_app_id()
+        draft = LoanApplication(
+            application_id=app_id,
+            user_id=current_user.id,
+            full_name=request.form.get('full_name'),
+            pan_number=request.form.get('pan_number', '').upper(),
+            date_of_birth=request.form.get('date_of_birth'),
+            employment_type=request.form.get('employment_type'),
+            employer_name=request.form.get('employer_name'),
+            annual_income=float(request.form.get('annual_income', 0)),
+            loan_type=request.form.get('loan_type'),
+            loan_amount=float(request.form.get('loan_amount', 0)),
+            tenure_months=int(request.form.get('tenure_months', 12)),
+            purpose=request.form.get('purpose'),
+            status='draft',
+        )
+        db.session.add(draft)
+        db.session.commit()
+
+        # Only store the tiny integer ID – never the full payload
+        session['draft_loan_id'] = draft.id
         return redirect(url_for('cibil_check'))
 
     return render_template('apply_loan.html')
@@ -372,8 +393,17 @@ def apply_loan():
 @app.route('/cibil-check', methods=['GET', 'POST'])
 @login_required
 def cibil_check():
-    if 'loan_data' not in session:
+    draft_id = session.get('draft_loan_id')
+    if not draft_id:
         flash('Please start the loan application first.', 'warning')
+        return redirect(url_for('apply_loan'))
+
+    draft = LoanApplication.query.filter_by(
+        id=draft_id, user_id=current_user.id, status='draft'
+    ).first()
+    if not draft:
+        flash('Your session has expired. Please start again.', 'warning')
+        session.pop('draft_loan_id', None)
         return redirect(url_for('apply_loan'))
 
     if request.method == 'POST':
@@ -381,47 +411,48 @@ def cibil_check():
 
         if cibil_score < 300 or cibil_score > 900:
             flash('CIBIL score must be between 300 and 900.', 'danger')
-            return render_template('cibil_check.html')
+            return render_template('cibil_check.html', loan_data=draft)
 
-        session['loan_data']['cibil_score'] = cibil_score
-        session.modified = True  # ← CRITICAL: Flask won't detect nested dict mutations without this
+        draft.cibil_score = cibil_score
 
         if cibil_score < 600:
-            # Reject immediately, save to DB
-            loan_data = session['loan_data']
-            app_id = generate_app_id()
-            loan = LoanApplication(
-                application_id=app_id,
-                user_id=current_user.id,
-                **{k: v for k, v in loan_data.items()},
-                cibil_status='failed',
-                status='rejected',
-                rejection_reason=f'CIBIL score {cibil_score} is below the minimum required score of 600.',
-                docs_uploaded=False,
-                approval_score=0
+            # Reject immediately – finalise the draft record
+            draft.cibil_status = 'failed'
+            draft.status = 'rejected'
+            draft.rejection_reason = (
+                f'CIBIL score {cibil_score} is below the minimum required score of 600.'
             )
-            db.session.add(loan)
+            draft.docs_uploaded = False
+            draft.approval_score = 0
             db.session.commit()
-            session.pop('loan_data', None)
-            return redirect(url_for('loan_result', app_id=app_id))
+            session.pop('draft_loan_id', None)
+            return redirect(url_for('loan_result', app_id=draft.application_id))
 
-        session['loan_data']['cibil_status'] = 'passed'
-        session.modified = True  # ← Force session save again after second mutation
+        draft.cibil_status = 'passed'
+        db.session.commit()
         return redirect(url_for('upload_docs'))
 
-    return render_template('cibil_check.html', loan_data=session.get('loan_data', {}))
+    return render_template('cibil_check.html', loan_data=draft)
 
 
 # ── Loan Application Step 3: Upload Documents ─────────────────────────────────
 @app.route('/upload-docs', methods=['GET', 'POST'])
 @login_required
 def upload_docs():
-    if 'loan_data' not in session:
+    draft_id = session.get('draft_loan_id')
+    if not draft_id:
         flash('Please start the loan application first.', 'warning')
         return redirect(url_for('apply_loan'))
 
-    loan_data = session['loan_data']
-    if loan_data.get('cibil_status') != 'passed':
+    draft = LoanApplication.query.filter_by(
+        id=draft_id, user_id=current_user.id, status='draft'
+    ).first()
+    if not draft:
+        flash('Your session has expired. Please start again.', 'warning')
+        session.pop('draft_loan_id', None)
+        return redirect(url_for('apply_loan'))
+
+    if draft.cibil_status != 'passed':
         flash('CIBIL check not completed.', 'warning')
         return redirect(url_for('cibil_check'))
 
@@ -445,50 +476,34 @@ def upload_docs():
             labels = {'doc_aadhaar': 'Aadhaar Card', 'doc_pan': 'PAN Card', 'doc_salary_slip': 'Salary Slip'}
             missing_names = [labels.get(m, m) for m in missing]
             flash(f'Please upload required documents: {", ".join(missing_names)}', 'danger')
-            return render_template('upload_docs.html', loan_data=loan_data)
+            return render_template('upload_docs.html', loan_data=draft)
 
         # Run loan prediction
         prediction = predict_loan(
-            cibil_score=loan_data['cibil_score'],
-            annual_income=loan_data['annual_income'],
-            loan_amount=loan_data['loan_amount'],
-            tenure_months=loan_data['tenure_months'],
-            employment_type=loan_data['employment_type']
+            cibil_score=draft.cibil_score,
+            annual_income=draft.annual_income,
+            loan_amount=draft.loan_amount,
+            tenure_months=draft.tenure_months,
+            employment_type=draft.employment_type
         )
 
-        app_id = generate_app_id()
-        loan = LoanApplication(
-            application_id=app_id,
-            user_id=current_user.id,
-            full_name=loan_data['full_name'],
-            pan_number=loan_data['pan_number'],
-            date_of_birth=loan_data['date_of_birth'],
-            employment_type=loan_data['employment_type'],
-            employer_name=loan_data['employer_name'],
-            annual_income=loan_data['annual_income'],
-            loan_type=loan_data['loan_type'],
-            loan_amount=loan_data['loan_amount'],
-            tenure_months=loan_data['tenure_months'],
-            purpose=loan_data['purpose'],
-            cibil_score=loan_data['cibil_score'],
-            cibil_status=loan_data['cibil_status'],
-            doc_aadhaar=doc_paths.get('doc_aadhaar'),
-            doc_pan=doc_paths.get('doc_pan'),
-            doc_salary_slip=doc_paths.get('doc_salary_slip'),
-            doc_bank_statement=doc_paths.get('doc_bank_statement'),
-            docs_uploaded=True,
-            status=prediction['status'],
-            approval_score=prediction['score'],
-            rejection_reason=prediction.get('reason'),
-            interest_rate=prediction.get('interest_rate'),
-            monthly_emi=prediction.get('monthly_emi')
-        )
-        db.session.add(loan)
+        # Finalise the draft record in-place (no new row needed)
+        draft.doc_aadhaar = doc_paths.get('doc_aadhaar')
+        draft.doc_pan = doc_paths.get('doc_pan')
+        draft.doc_salary_slip = doc_paths.get('doc_salary_slip')
+        draft.doc_bank_statement = doc_paths.get('doc_bank_statement')
+        draft.docs_uploaded = True
+        draft.status = prediction['status']
+        draft.approval_score = prediction['score']
+        draft.rejection_reason = prediction.get('reason')
+        draft.interest_rate = prediction.get('interest_rate')
+        draft.monthly_emi = prediction.get('monthly_emi')
         db.session.commit()
-        session.pop('loan_data', None)
-        return redirect(url_for('loan_result', app_id=app_id))
 
-    return render_template('upload_docs.html', loan_data=loan_data)
+        session.pop('draft_loan_id', None)
+        return redirect(url_for('loan_result', app_id=draft.application_id))
+
+    return render_template('upload_docs.html', loan_data=draft)
 
 
 # ── Loan Result ────────────────────────────────────────────────────────────────

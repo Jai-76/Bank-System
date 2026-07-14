@@ -1,4 +1,4 @@
-## 🏦 NexBank – Loan Prediction
+## 🏦Loan Prediction
 
 > AI-powered loan eligibility prediction platform built with Flask & Python.
 

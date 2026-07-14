@@ -1,0 +1,57 @@
+{% extends 'base.html' %}{% block title %}History – LoanPro AI{% endblock %}
+{% block content %}
+<div class="page-hdr">
+  <div class="container flex ic jb" style="flex-wrap:wrap;gap:14px">
+    <div><h1>Application History</h1><p>All your loan applications</p></div>
+    <a href="{{ url_for('loan_start') }}" class="btn btn-primary">+ New Application</a>
+  </div>
+</div>
+<div class="container sec-sm" style="max-width:900px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+    {% for f,lbl in [('all','All ('+apps|length|string+')')  ,('APPROVED','✅ Approved'),('CONDITIONAL','⚠️ Conditional'),('REJECTED','❌ Rejected')] %}
+    <button class="btn btn-ghost btn-sm filter-btn {{ 'active' if f=='all' else '' }}" data-filter="{{ f }}"
+            style="{{ 'background:var(--p);border-color:var(--p);color:#fff' if f=='all' else '' }}">{{ lbl }}</button>
+    {% endfor %}
+  </div>
+
+  {% set type_icons = {'Car':'🚗','Home':'🏠','Personal':'💳','Education':'🎓','Business':'💼','Gold':'🥇','Medical':'🏥'} %}
+  {% if apps %}
+    {% for a in apps %}
+    <div class="doc-card app-row" data-status="{{ a.status }}" style="margin-bottom:12px;padding:18px 22px">
+      <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;
+        background:{{ 'rgba(34,197,94,.12)' if a.status=='APPROVED' else 'rgba(249,115,22,.12)' if a.status=='CONDITIONAL' else 'rgba(239,68,68,.12)' }}">
+        {{ type_icons.get(a.loan_type,'💳') }}
+      </div>
+      <div class="doc-info">
+        <h4>{{ a.loan_type }} Loan &nbsp;<span class="tag">{{ a.id }}</span></h4>
+        <p>{{ a.date }} · {{ a.term }} months · {{ a.rate }}% p.a.</p>
+      </div>
+      <div style="text-align:center;min-width:60px">
+        <div style="font-size:.72rem;color:var(--txt3);margin-bottom:3px">Score</div>
+        <strong style="font-size:1.2rem;color:{{ '#22c55e' if a.score>=70 else '#f97316' if a.score>=50 else '#ef4444' }}">{{ a.score }}</strong>
+      </div>
+      <div style="text-align:center;min-width:90px">
+        <div style="font-size:.72rem;color:var(--txt3);margin-bottom:3px">EMI/mo</div>
+        <strong style="color:var(--ph)">₹{{ '{:,.0f}'.format(a.emi) }}</strong>
+      </div>
+      <div style="text-align:right;min-width:90px">
+        <strong style="display:block;color:#fff">₹{{ '{:,.0f}'.format(a.amount) }}</strong>
+        <span style="font-size:.74rem;color:var(--txt3)">Loan amount</span>
+      </div>
+      <div>
+        {% if a.status=='APPROVED' %}<span class="badge b-green">✓ Approved</span>
+        {% elif a.status=='CONDITIONAL' %}<span class="badge b-orange">⚠ Conditional</span>
+        {% else %}<span class="badge b-red">✕ Rejected</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="card txt-c" style="padding:70px 24px">
+      <div style="font-size:3.5rem;margin-bottom:16px">📋</div>
+      <h3 style="margin-bottom:10px">No Applications Yet</h3>
+      <p class="mb24" style="font-size:.88rem">Apply for your first loan to see history here.</p>
+      <a href="{{ url_for('loan_start') }}" class="btn btn-primary btn-lg">Apply Now</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

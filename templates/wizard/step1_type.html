@@ -1,0 +1,62 @@
+{% extends 'base.html' %}{% block title %}Apply – Choose Loan Type{% endblock %}
+{% block content %}
+<div class="wizard-wrap fade">
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step-item active"><div class="step-circle active">1</div><span class="step-label">Loan Type</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">2</div><span class="step-label">Details</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">3</div><span class="step-label">CIBIL</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">4</div><span class="step-label">Documents</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">5</div><span class="step-label">Result</span></div>
+  </div>
+
+  <div class="card mb24">
+    <h2 style="color:#fff;margin-bottom:6px">Step 1 – Choose Loan Type</h2>
+    <p style="margin-bottom:26px;font-size:.9rem">Select the type of loan you want to apply for.</p>
+
+    <input type="hidden" id="selected_type" value="personal"/>
+    <div class="lt-grid" style="grid-template-columns:repeat(auto-fill,minmax(155px,1fr))">
+      {% for ic,title,desc,t in [
+        ('🚗','Car Loan',      'Hatchback to Luxury',   'car'),
+        ('🏠','Home Loan',     'Buy or construct home',  'home'),
+        ('💳','Personal Loan', 'Any purpose, fast',      'personal'),
+        ('🎓','Education Loan','College & abroad study',  'education'),
+        ('💼','Business Loan', 'Grow your business',     'business'),
+        ('🥇','Gold Loan',     'Loan against gold',      'gold'),
+        ('🏥','Medical Loan',  'Emergency healthcare',   'medical'),
+      ] %}
+      <div class="lt-card {% if t=='personal' %}selected{% endif %}" data-type="{{ t }}"
+           onclick="document.getElementById('selected_type').value='{{ t }}'">
+        <span class="lti">{{ ic }}</span>
+        <h4>{{ title }}</h4>
+        <p>{{ desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">← Dashboard</a>
+    <a id="nextBtn" href="{{ url_for('loan_apply') }}?type=personal" class="btn btn-primary btn-lg" style="margin-left:auto">
+      Continue to Details →
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.lt-card').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.lt-card').forEach(x => x.classList.remove('selected'));
+    c.classList.add('selected');
+    document.getElementById('nextBtn').href = '/loan/apply?type=' + c.dataset.type;
+  });
+});
+</script>
+{% endblock %}

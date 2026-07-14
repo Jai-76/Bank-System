@@ -1,0 +1,196 @@
+{% extends 'base.html' %}{% block title %}Apply – Loan Details{% endblock %}
+{% block content %}
+{% set icons = {'car':'🚗','home':'🏠','personal':'💳','education':'🎓','business':'💼','gold':'🥇','medical':'🏥'} %}
+{% set labels = {'car':'Car Loan','home':'Home Loan','personal':'Personal Loan','education':'Education Loan','business':'Business Loan','gold':'Gold Loan','medical':'Medical Loan'} %}
+{% set rates  = {'car':9.5,'home':8.5,'personal':12.5,'education':7.5,'business':13.5,'gold':9.0,'medical':11.5} %}
+{% set mins   = {'car':50000,'home':500000,'personal':10000,'education':50000,'business':100000,'gold':10000,'medical':10000} %}
+{% set maxs   = {'car':2000000,'home':10000000,'personal':500000,'education':2000000,'business':5000000,'gold':500000,'medical':300000} %}
+{% set defs   = {'car':500000,'home':2000000,'personal':100000,'education':300000,'business':500000,'gold':100000,'medical':50000} %}
+{% set mterms = {'car':84,'home':360,'personal':60,'education':84,'business':84,'gold':36,'medical':48} %}
+
+<div class="wizard-wrap fade">
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step-item done"><div class="step-circle done">✓</div><span class="step-label">Loan Type</span></div>
+    <div class="step-line done"></div>
+    <div class="step-item active"><div class="step-circle active">2</div><span class="step-label">Details</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">3</div><span class="step-label">CIBIL</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">4</div><span class="step-label">Documents</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">5</div><span class="step-label">Result</span></div>
+  </div>
+
+  <form method="POST" action="{{ url_for('loan_apply') }}" id="applyForm">
+    <input type="hidden" name="loan_type" value="{{ loan_type }}"/>
+
+    <!-- Header -->
+    <div class="card mb20">
+      <div class="flex ic g12 mb4">
+        <span style="font-size:2rem">{{ icons.get(loan_type,'💳') }}</span>
+        <div>
+          <h2 style="color:#fff;font-size:1.5rem">{{ labels.get(loan_type,'Loan') }} Application</h2>
+          <p style="font-size:.84rem;margin:0">Step 2 of 5 – Fill your loan & personal details</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loan Amount Slider -->
+    <div class="card mb20">
+      <h3 style="color:#fff;margin-bottom:20px">💰 Loan Details</h3>
+      <div class="form-group">
+        <label>Loan Amount</label>
+        <div class="slider-group">
+          <div class="flex ic jb mb8">
+            <span style="font-size:.8rem;color:var(--txt3)">₹{{ '{:,.0f}'.format(mins.get(loan_type,10000)) }}</span>
+            <span class="slider-val" style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.28);border-radius:8px;padding:5px 14px;font-weight:800;color:var(--ph)">₹{{ '{:,.0f}'.format(defs.get(loan_type,100000)) }}</span>
+            <span style="font-size:.8rem;color:var(--txt3)">₹{{ '{:,.0f}'.format(maxs.get(loan_type,500000)) }}</span>
+          </div>
+          <input type="range" name="loan_amount" id="loan_amount" class="range-inp"
+                 min="{{ mins.get(loan_type,10000) }}" max="{{ maxs.get(loan_type,500000) }}"
+                 step="{{ ((maxs.get(loan_type,500000)-mins.get(loan_type,10000))//100)|int }}"
+                 value="{{ defs.get(loan_type,100000) }}"
+                 data-prefix="₹"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Loan Term (Months)</label>
+        <div class="slider-group">
+          <div class="flex ic jb mb8">
+            <span style="font-size:.8rem;color:var(--txt3)">6 months</span>
+            <span class="slider-val" style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.28);border-radius:8px;padding:5px 14px;font-weight:800;color:var(--ph)">12 months</span>
+            <span style="font-size:.8rem;color:var(--txt3)">{{ mterms.get(loan_type,60) }} months</span>
+          </div>
+          <input type="range" name="loan_term" id="loan_term" class="range-inp"
+                 min="6" max="{{ mterms.get(loan_type,60) }}" step="6" value="12"
+                 data-prefix="" data-suffix=" months"/>
+        </div>
+      </div>
+
+      <!-- Live EMI Preview -->
+      <div class="emi-box" data-rate="{{ rates.get(loan_type,12) }}">
+        <div><strong id="emi-emi">—</strong><span>Monthly EMI</span></div>
+        <div><strong id="emi-total">—</strong><span>Total Payable</span></div>
+        <div><strong id="emi-int">—</strong><span>Total Interest</span></div>
+      </div>
+    </div>
+
+    <!-- Personal Details -->
+    <div class="card mb20">
+      <h3 style="color:#fff;margin-bottom:20px">👤 Personal Details</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="full_name" class="inp" placeholder="Alex Johnson" required/>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" name="age" class="inp" placeholder="30" min="18" max="75" required/>
+        </div>
+        <div class="form-group">
+          <label>Annual Income (₹)</label>
+          <input type="number" name="annual_income" class="inp" placeholder="600000" min="0" required/>
+          <div class="hint">Include all income sources</div>
+        </div>
+        <div class="form-group">
+          <label>Employment Type</label>
+          <select name="employment_type" class="inp" required>
+            <option value="salaried" selected>Salaried (Private)</option>
+            <option value="salaried">Salaried (Government)</option>
+            <option value="self_employed">Self-Employed</option>
+            <option value="business">Business Owner</option>
+            <option value="freelance">Freelancer</option>
+            <option value="retired">Retired</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>CIBIL / Credit Score</label>
+          <input type="number" name="credit_score" class="inp" placeholder="700" min="300" max="900"/>
+          <div class="hint">Leave blank – we'll check in next step</div>
+        </div>
+        <div class="form-group">
+          <label>Existing EMI / Month (₹)</label>
+          <input type="number" name="existing_emi" class="inp" placeholder="0" min="0" value="0"/>
+          <div class="hint">Other loan EMIs currently paying</div>
+        </div>
+      </div>
+
+      <!-- Loan-specific fields -->
+      {% if loan_type == 'car' %}
+      <h4 style="color:#fff;margin:16px 0 14px;font-size:.92rem">🚗 Vehicle Details</h4>
+      <div class="form-grid">
+        <div class="form-group"><label>Vehicle Type</label>
+          <select name="vehicle_type" class="inp">
+            <option>Hatchback</option><option>Sedan</option><option>SUV</option><option>Luxury</option><option>EV / Hybrid</option>
+          </select></div>
+        <div class="form-group"><label>New or Used?</label>
+          <select name="vehicle_condition" class="inp">
+            <option value="new">New Vehicle</option><option value="used">Used Vehicle</option>
+          </select></div>
+      </div>
+      {% elif loan_type == 'home' %}
+      <h4 style="color:#fff;margin:16px 0 14px;font-size:.92rem">🏠 Property Details</h4>
+      <div class="form-grid">
+        <div class="form-group"><label>Property Type</label>
+          <select name="property_type" class="inp">
+            <option>Apartment</option><option>Independent House</option><option>Villa</option><option>Plot + Construction</option>
+          </select></div>
+        <div class="form-group"><label>Property Value (₹)</label>
+          <input type="number" name="property_value" class="inp" placeholder="5000000"/></div>
+      </div>
+      {% elif loan_type == 'education' %}
+      <h4 style="color:#fff;margin:16px 0 14px;font-size:.92rem">🎓 Education Details</h4>
+      <div class="form-grid">
+        <div class="form-group"><label>Course / Program</label>
+          <input type="text" name="course" class="inp" placeholder="B.Tech / MBA / MBBS"/></div>
+        <div class="form-group"><label>Institution</label>
+          <input type="text" name="institution" class="inp" placeholder="IIT / NIT / Harvard"/></div>
+      </div>
+      {% elif loan_type == 'business' %}
+      <h4 style="color:#fff;margin:16px 0 14px;font-size:.92rem">💼 Business Details</h4>
+      <div class="form-grid">
+        <div class="form-group"><label>Business Type</label>
+          <select name="business_type" class="inp">
+            <option>Sole Proprietorship</option><option>Partnership</option><option>LLP</option><option>Pvt. Ltd.</option>
+          </select></div>
+        <div class="form-group"><label>Years in Business</label>
+          <input type="number" name="years_business" class="inp" placeholder="3" min="0"/></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="flex g12">
+      <a href="{{ url_for('loan_start') }}" class="btn btn-ghost">← Back</a>
+      <button type="submit" class="btn btn-primary btn-lg" style="margin-left:auto">Check CIBIL Score →</button>
+    </div>
+    <p style="font-size:.75rem;color:var(--txt3);text-align:center;margin-top:10px">🔒 Secure & encrypted · For demo purposes only</p>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Sync sliders on page load
+document.querySelectorAll('.slider-group').forEach(g => {
+  const inp = g.querySelector('input[type=range]');
+  const dsp = g.querySelector('.slider-val');
+  if (!inp || !dsp) return;
+  function upd() {
+    const v = +inp.value;
+    if (inp.dataset.prefix === '₹') {
+      dsp.textContent = v >= 1e7 ? '₹'+(v/1e7).toFixed(1)+' Cr' : v >= 1e5 ? '₹'+(v/1e5).toFixed(1)+' L' : '₹'+v.toLocaleString();
+    } else {
+      dsp.textContent = (inp.dataset.prefix||'') + v.toLocaleString() + (inp.dataset.suffix||'');
+    }
+  }
+  inp.addEventListener('input', () => { upd(); calcEMI(); });
+  upd();
+});
+// Set correct rate from data attribute
+const rateEl = document.querySelector('[data-rate]');
+if (rateEl) window._loanRate = +rateEl.dataset.rate;
+</script>
+{% endblock %}

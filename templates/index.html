@@ -1,318 +1,132 @@
-{% extends "base.html" %}
-{% block title %}Loan Prediction – Smart & Instant{% endblock %}
-{% block meta_desc %}Get instant AI-powered loan eligibility prediction. Personal, Car & Education loans starting at 8.5% p.a.{% endblock %}
-
+{% extends 'base.html' %}
+{% block title %}LoanPro AI – Smart Loan Predictions{% endblock %}
 {% block content %}
-<style>
-/* ── Hero ─────────────────────────────────────────────────────────────── */
-.hero {
-  background: linear-gradient(135deg, #0f1347 0%, #1a1f6e 50%, #4f46e5 100%);
-  min-height: calc(100vh - 68px);
-  display: flex; align-items: center;
-  padding: 60px 24px;
-  position: relative; overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 60% 70% at 70% 50%, rgba(99,102,241,0.25) 0%, transparent 70%);
-}
-.hero-container {
-  max-width: 800px; margin: 0 auto; width: 100%;
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-  position: relative; z-index: 1;
-}
-.hero-badge {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px); border-radius: 20px;
-  padding: 6px 14px; font-size: 12px; font-weight: 600;
-  color: rgba(255,255,255,0.85); margin-bottom: 24px; letter-spacing: 0.3px;
-}
-.hero-title {
-  font-size: clamp(36px, 5vw, 56px); font-weight: 800; color: #fff;
-  line-height: 1.1; margin-bottom: 20px; letter-spacing: -1.5px;
-}
-.hero-title .highlight {
-  background: linear-gradient(135deg, #a5b4fc, #818cf8);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.hero-subtitle {
-  font-size: 16px; color: rgba(255,255,255,0.7); line-height: 1.7;
-  margin-bottom: 36px; max-width: 560px;
-}
-.hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 48px; }
-.btn-hero-primary {
-  background: #fff; color: #1a1f6e; font-weight: 700;
-  padding: 14px 28px; border-radius: 12px; text-decoration: none;
-  font-size: 15px; display: inline-flex; align-items: center; gap: 8px;
-  transition: all 0.25s; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-}
-.btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
-.btn-hero-outline {
-  border: 1.5px solid rgba(255,255,255,0.35); color: #fff;
-  padding: 14px 28px; border-radius: 12px; text-decoration: none;
-  font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;
-  transition: all 0.25s; backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.06);
-}
-.btn-hero-outline:hover { background: rgba(255,255,255,0.14); transform: translateY(-2px); }
-.hero-stats { display: flex; }
-.stat-item { padding: 0 28px; text-align: center; }
-.stat-item:first-child { padding-left: 0; }
-.stat-num { display: block; font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
-.stat-lbl { display: block; font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 500; margin-top: 2px; }
-.stat-divider { width: 1px; background: rgba(255,255,255,0.15); margin: 4px 0; }
 
-
-
-/* ── Shared Section ──────────────────────────────────────────────────── */
-.section { padding: 80px 24px; }
-.container { max-width: 1200px; margin: 0 auto; }
-.section-eyebrow { font-size: 12px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 10px; }
-.section-title { font-size: clamp(26px,3vw,36px); font-weight: 800; color: #0f172a; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 12px; }
-.section-header { text-align: center; margin-bottom: 48px; }
-
-/* ── Loan Cards ──────────────────────────────────────────────────────── */
-.loan-section { background: #f8fafc; }
-.loan-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
-.loan-card {
-  background: #fff; border-radius: 20px; padding: 32px 28px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 16px rgba(79,70,229,0.04);
-  transition: all 0.3s; display: flex; flex-direction: column;
-}
-.loan-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(79,70,229,0.12); border-color: rgba(79,70,229,0.2); }
-.loan-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 20px; }
-.loan-icon.personal { background: linear-gradient(135deg,#ede9fe,#ddd6fe); }
-.loan-icon.car { background: linear-gradient(135deg,#ecfdf5,#d1fae5); }
-.loan-icon.edu { background: linear-gradient(135deg,#fff7ed,#fed7aa); }
-.loan-card h3 { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-.loan-card p { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 20px; }
-.loan-details { list-style: none; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
-.loan-details li { font-size: 13px; color: #0f172a; font-weight: 500; display: flex; align-items: center; gap: 8px; }
-.loan-details li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #4f46e5; flex-shrink: 0; }
-.btn-apply {
-  margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 11px 20px; border-radius: 10px; font-size: 13px; font-weight: 600;
-  border: 1.5px solid #4f46e5; color: #4f46e5; text-decoration: none; transition: all 0.2s;
-}
-.btn-apply:hover { background: #4f46e5; color: #fff; }
-
-/* ── Steps ──────────────────────────────────────────────────────────── */
-.steps-section { background: #fff; }
-.steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 32px; }
-.step-card { text-align: center; padding: 20px; }
-.step-num {
-  width: 60px; height: 60px; border-radius: 50%;
-  background: linear-gradient(135deg, #1a1f6e, #4f46e5);
-  color: #fff; font-size: 20px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 16px;
-  box-shadow: 0 4px 16px rgba(79,70,229,0.3);
-}
-.step-card h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-.step-card p { font-size: 13px; color: #64748b; line-height: 1.6; }
-.steps-cta { text-align: center; margin-top: 48px; }
-.btn-primary-solid {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: linear-gradient(135deg,#1a1f6e,#4f46e5); color: #fff;
-  padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 700;
-  text-decoration: none; transition: all 0.25s;
-  box-shadow: 0 4px 20px rgba(79,70,229,0.25);
-}
-.btn-primary-solid:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.35); }
-
-/* ── Trust ──────────────────────────────────────────────────────────── */
-.trust-section { background: #f8fafc; }
-.trust-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
-.trust-card {
-  background: #fff; border-radius: 16px; padding: 28px 24px; text-align: center;
-  border: 1px solid #e2e8f0; transition: all 0.3s;
-}
-.trust-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(79,70,229,0.08); }
-.trust-icon { font-size: 32px; margin-bottom: 14px; display: block; }
-.trust-card h4 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
-.trust-card p { font-size: 12px; color: #64748b; line-height: 1.6; }
-
-/* ── CTA ─────────────────────────────────────────────────────────────── */
-.cta-section { padding: 60px 24px; }
-.cta-banner {
-  max-width: 1200px; margin: 0 auto;
-  background: linear-gradient(135deg, #0f1347 0%, #4f46e5 100%);
-  border-radius: 24px; padding: 56px 48px; text-align: center;
-  position: relative; overflow: hidden;
-}
-.cta-banner::before {
-  content: ''; position: absolute; top: -60px; right: -60px;
-  width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.05);
-}
-.cta-banner h2 { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 12px; }
-.cta-banner p { color: rgba(255,255,255,0.7); font-size: 15px; margin-bottom: 28px; }
-.btn-cta {
-  background: #fff; color: #1a1f6e; font-weight: 700; font-size: 15px;
-  padding: 14px 32px; border-radius: 12px; text-decoration: none;
-  display: inline-flex; align-items: center; gap: 8px; transition: all 0.25s;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-}
-.btn-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
-
-/* ── Responsive ──────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .loan-grid, .steps-grid { grid-template-columns: 1fr; }
-  .trust-grid { grid-template-columns: repeat(2,1fr); }
-  .cta-banner { padding: 40px 24px; }
-}
-</style>
-
-<!-- ── Hero ────────────────────────────────────────────────────────────── -->
+<!-- HERO -->
 <section class="hero">
-  <div class="hero-container">
-    <div class="hero-badge">🤖 AI-Powered Loan Prediction Engine</div>
-    <h1 class="hero-title">Smart Loans,<br/><span class="highlight">Instant Decisions.</span></h1>
-    <p class="hero-subtitle">Get your loan eligibility predicted in under 3 minutes. Competitive rates from <strong style="color:#fff">8.5% p.a.</strong> — no surprises, no delays.</p>
-    <div class="hero-actions">
-      <a href="{{ url_for('apply_loan') }}" class="btn-hero-primary" id="hero-apply-btn">
-        Check Eligibility <span>→</span>
+  <div class="hero-inner">
+    <div class="fade">
+      <div class="pill">✨ AI-Powered · Instant Decisions</div>
+      <h1 class="hero-title">Get Your Loan<br><span class="hi">Approved</span><br>in Minutes</h1>
+      <p class="hero-sub">Check eligibility for Car, Home, Personal, Education & Business loans with AI — CIBIL score check, document upload, and instant prediction.</p>
+      <div class="hero-btns">
+        <a href="{{ url_for('loan_start') }}" class="btn btn-primary btn-lg">🚀 Apply for Loan</a>
+        <a href="{{ url_for('demo_login') }}" class="btn btn-gold btn-lg">🎮 Try Demo</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hs"><strong data-count="50000">0</strong><span>Loans Processed</span></div>
+        <div class="hs"><strong data-count="94">0</strong><strong style="color:#fff">%</strong><span>Approval Rate</span></div>
+        <div class="hs"><strong style="color:#fff">3s</strong><span>Decision Time</span></div>
+      </div>
+    </div>
+    <div class="hero-card-wrap">
+      <div class="hero-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <span style="font-size:.82rem;color:var(--txt3);font-weight:600">LOAN ELIGIBILITY</span>
+          <span class="badge b-green">● Live</span>
+        </div>
+        <div class="loan-chips">
+          <div class="lc on">🚗 Car</div><div class="lc">🏠 Home</div>
+          <div class="lc">💳 Personal</div><div class="lc">💼 Business</div>
+        </div>
+        <div class="hrow"><span>Interest Rate</span><strong>8.5% p.a.</strong></div>
+        <div class="hrow"><span>Max Amount</span><strong>₹50 Lakh</strong></div>
+        <div class="hrow"><span>Monthly EMI</span><strong style="color:var(--ph)">₹8,200</strong></div>
+        <div class="hrow"><span>CIBIL Score</span><strong style="color:#22c55e">742 – Good</strong></div>
+        <div class="hrow"><span>Decision</span><span class="badge b-green" style="font-size:.8rem">✓ APPROVED</span></div>
+        <a href="{{ url_for('loan_start') }}" class="btn btn-primary btn-full mt16">Start Application →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="sec" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div class="sec-title ctr">
+      <h2>How It Works</h2>
+      <p>5 simple steps from application to approval</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+      {% for num,icon,title,desc in [
+        ('01','📋','Choose Loan Type','Pick from 7 loan categories'),
+        ('02','📝','Fill Details','Income, employment, loan amount'),
+        ('03','📊','CIBIL Check','Instant credit score verification'),
+        ('04','📁','Upload Docs','KYC & income documents'),
+        ('05','🎉','Get Result','Instant AI-powered decision'),
+      ] %}
+      <div class="card txt-c" style="padding:32px 18px">
+        <div style="font-size:2rem;margin-bottom:10px">{{ icon }}</div>
+        <div style="font-size:.72rem;font-weight:800;color:var(--ph);letter-spacing:.12em;margin-bottom:6px">STEP {{ num }}</div>
+        <h3 style="margin-bottom:6px">{{ title }}</h3>
+        <p style="font-size:.82rem">{{ desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- LOAN TYPES -->
+<section class="sec">
+  <div class="container">
+    <div class="sec-title ctr">
+      <h2>Choose Your Loan</h2>
+      <p>We cover every financial need</p>
+    </div>
+    <div class="lt-grid">
+      {% for ic,title,desc,t in [
+        ('🚗','Car Loan','Hatchback to SUV',         'car'),
+        ('🏠','Home Loan','Own your dream home',       'home'),
+        ('💳','Personal Loan','Any purpose, fast',     'personal'),
+        ('🎓','Education Loan','Invest in your future','education'),
+        ('💼','Business Loan','Grow your business',    'business'),
+        ('🥇','Gold Loan','Unlock gold value',         'gold'),
+        ('🏥','Medical Loan','Emergency funds fast',   'medical'),
+      ] %}
+      <a href="{{ url_for('loan_apply') }}?type={{ t }}" class="lt-card">
+        <span class="lti">{{ ic }}</span>
+        <h4>{{ title }}</h4>
+        <p>{{ desc }}</p>
       </a>
-      <a href="#loan-types" class="btn-hero-outline">Explore Loans</a>
-    </div>
-    <div class="hero-stats">
-      <div class="stat-item">
-        <span class="stat-num">₹50L+</span>
-        <span class="stat-lbl">Max Loan</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-num">8.5%</span>
-        <span class="stat-lbl">Rate p.a.</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-num">3 Min</span>
-        <span class="stat-lbl">Prediction</span>
-      </div>
+      {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ── Loan Types ──────────────────────────────────────────────────────── -->
-<section class="section loan-section" id="loan-types">
+<!-- FEATURES -->
+<section class="sec sec-alt">
   <div class="container">
-    <div class="section-header">
-      <span class="section-eyebrow">Our Products</span>
-      <h2 class="section-title">Loans Tailored for You</h2>
-    </div>
-    <div class="loan-grid">
-      <div class="loan-card">
-        <div class="loan-icon personal">💼</div>
-        <h3>Personal Loan</h3>
-        <p>Fulfill your dreams — travel, wedding, medical emergencies, or any personal need.</p>
-        <ul class="loan-details">
-          <li>Up to ₹40 Lakhs</li>
-          <li>Rate from 10.5% p.a.</li>
-          <li>Tenure up to 5 years</li>
-        </ul>
-        <a href="{{ url_for('apply_loan') }}" class="btn-apply">Apply Now →</a>
+    <div class="sec-title ctr"><h2>Why LoanPro AI?</h2><p>Smart, fast, and transparent</p></div>
+    <div class="features-grid">
+      {% for c,ic,title,desc in [
+        ('#6366f1','🤖','AI Prediction Engine','20+ data points analysed in seconds for accurate eligibility.'),
+        ('#06b6d4','📊','CIBIL Score Check','Instant credit score check with detailed improvement tips.'),
+        ('#22c55e','📁','Document Vault','Upload & manage KYC and income docs securely.'),
+        ('#f59e0b','💰','Live EMI Calculator','Real-time EMI preview with full payment breakdown.'),
+        ('#8b5cf6','⚡','Instant Decision','APPROVED / CONDITIONAL / REJECTED with full reasoning.'),
+        ('#ef4444','🔒','Bank-Grade Security','End-to-end encrypted. Your data is never shared.'),
+      ] %}
+      <div class="fc">
+        <div class="fc-icon" style="background:{{ c }}20">{{ ic }}</div>
+        <h3>{{ title }}</h3><p>{{ desc }}</p>
       </div>
-      <div class="loan-card">
-        <div class="loan-icon car">🚗</div>
-        <h3>Car Loan</h3>
-        <p>Drive home your dream car with quick approvals and minimal documentation.</p>
-        <ul class="loan-details">
-          <li>Up to ₹1.5 Crore</li>
-          <li>Rate from 8.75% p.a.</li>
-          <li>Tenure up to 7 years</li>
-        </ul>
-        <a href="{{ url_for('apply_loan') }}" class="btn-apply">Apply Now →</a>
-      </div>
-      <div class="loan-card">
-        <div class="loan-icon edu">🎓</div>
-        <h3>Education Loan</h3>
-        <p>Invest in your future with our education loans for India and abroad studies.</p>
-        <ul class="loan-details">
-          <li>Up to ₹20 Lakhs</li>
-          <li>Rate from 9.5% p.a.</li>
-          <li>Moratorium period available</li>
-        </ul>
-        <a href="{{ url_for('apply_loan') }}" class="btn-apply">Apply Now →</a>
-      </div>
+      {% endfor %}
     </div>
   </div>
 </section>
 
-<!-- ── How it Works ────────────────────────────────────────────────────── -->
-<section class="section steps-section">
+<!-- CTA -->
+<section class="sec" style="padding-top:0">
   <div class="container">
-    <div class="section-header">
-      <span class="section-eyebrow">Simple Process</span>
-      <h2 class="section-title">Apply in 3 Easy Steps</h2>
-    </div>
-    <div class="steps-grid">
-      <div class="step-card">
-        <div class="step-num">1</div>
-        <h3>Fill Application</h3>
-        <p>Enter your personal & financial details in our secure online form.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-num">2</div>
-        <h3>CIBIL Check</h3>
-        <p>We verify your CIBIL score to assess your creditworthiness instantly.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-num">3</div>
-        <h3>Instant Prediction</h3>
-        <p>Upload documents and get your AI-powered loan decision immediately.</p>
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,.16),rgba(6,182,212,.08));
+      border:1px solid rgba(99,102,241,.28);border-radius:22px;padding:56px 36px;text-align:center">
+      <h2 style="margin-bottom:14px">Ready to check your eligibility?</h2>
+      <p style="margin-bottom:30px;max-width:480px;margin-left:auto;margin-right:auto">No hidden fees. No commitment. Get your result in under 3 seconds.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Create Free Account</a>
+        <a href="{{ url_for('demo_login') }}" class="demo-btn" style="width:auto;padding:14px 26px">🎮 Try Demo – No Signup</a>
       </div>
     </div>
-    <div class="steps-cta">
-      <a href="{{ url_for('apply_loan') }}" class="btn-primary-solid" id="steps-apply-btn">
-        Start Your Application →
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ── Trust ───────────────────────────────────────────────────────────── -->
-<section class="section trust-section">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-eyebrow">Why Us</span>
-      <h2 class="section-title">Trusted by Millions</h2>
-    </div>
-    <div class="trust-grid">
-      <div class="trust-card">
-        <span class="trust-icon">🔒</span>
-        <h4>100% Secure</h4>
-        <p>256-bit SSL encryption protects your data at all times.</p>
-      </div>
-      <div class="trust-card">
-        <span class="trust-icon">⚡</span>
-        <h4>Instant Decision</h4>
-        <p>Get your loan prediction in minutes, not days.</p>
-      </div>
-      <div class="trust-card">
-        <span class="trust-icon">🏦</span>
-        <h4>RBI Regulated</h4>
-        <p>Licensed and regulated by the Reserve Bank of India.</p>
-      </div>
-      <div class="trust-card">
-        <span class="trust-icon">💬</span>
-        <h4>24/7 Support</h4>
-        <p>Our experts are available round the clock to assist you.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── CTA ─────────────────────────────────────────────────────────────── -->
-<section class="cta-section">
-  <div class="cta-banner">
-    <h2>Ready to Get Your Loan?</h2>
-    <p>Join thousands of customers who trust us for fast, fair loan predictions.</p>
-    <a href="{{ url_for('apply_loan') }}" class="btn-cta" id="cta-apply-btn">
-      Check My Eligibility →
-    </a>
   </div>
 </section>
 

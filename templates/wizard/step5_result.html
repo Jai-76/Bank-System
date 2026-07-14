@@ -1,0 +1,137 @@
+{% extends 'base.html' %}{% block title %}Loan Result – LoanPro AI{% endblock %}
+{% block content %}
+<div class="wizard-wrap fade">
+
+  <!-- Stepper – All Done -->
+  <div class="stepper">
+    {% for lbl in ['Loan Type','Details','CIBIL','Documents','Result'] %}
+    <div class="step-item done"><div class="step-circle done">✓</div><span class="step-label">{{ lbl }}</span></div>
+    {% if not loop.last %}<div class="step-line done"></div>{% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- Result Hero -->
+  <div class="result-hero" style="
+    border-color: {{ '#22c55e55' if res.status=='APPROVED' else '#f9731655' if res.status=='CONDITIONAL' else '#ef444455' }};
+    background: linear-gradient(135deg,
+      {{ 'rgba(34,197,94,.08)' if res.status=='APPROVED' else 'rgba(249,115,22,.08)' if res.status=='CONDITIONAL' else 'rgba(239,68,68,.08)' }},
+      var(--bg2));
+  ">
+    <span class="result-icon">
+      {{ '🎉' if res.status=='APPROVED' else '⚠️' if res.status=='CONDITIONAL' else '❌' }}
+    </span>
+    <h1 style="color:{{ res.color }};font-size:2.5rem;margin-bottom:8px">
+      {{ 'LOAN APPROVED!' if res.status=='APPROVED' else 'CONDITIONAL APPROVAL' if res.status=='CONDITIONAL' else 'LOAN REJECTED' }}
+    </h1>
+    <p style="font-size:.98rem;margin-bottom:6px;max-width:500px;margin-left:auto;margin-right:auto">
+      {% if res.status == 'APPROVED' %}
+        Congratulations! Your profile meets all criteria. Upload documents to proceed with disbursement.
+      {% elif res.status == 'CONDITIONAL' %}
+        Your application may be approved with a co-applicant or additional conditions.
+      {% else %}
+        Your current profile doesn't meet the minimum criteria. See improvement tips below.
+      {% endif %}
+    </p>
+    <p style="font-size:.8rem;color:var(--txt3)">
+      Application ID: <strong style="color:#fff">{{ app.id }}</strong> &nbsp;·&nbsp; {{ app.date }}
+    </p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px">
+
+    <!-- Left: Score Gauge + Loan Details -->
+    <div>
+      <!-- Gauge -->
+      <div class="card txt-c mb16">
+        <h4 style="color:#fff;margin-bottom:16px">AI Eligibility Score</h4>
+        <div class="gauge-wrap">
+          <svg width="190" height="190" viewBox="0 0 190 190">
+            <defs>
+              <linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:{{ res.color }}"/>
+                <stop offset="100%" style="stop-color:{{ '#06b6d4' if res.status=='APPROVED' else '#facc15' if res.status=='CONDITIONAL' else '#dc2626' }}"/>
+              </linearGradient>
+            </defs>
+            <circle cx="95" cy="95" r="80" fill="none" stroke="var(--bg3)" stroke-width="15"/>
+            <circle cx="95" cy="95" r="80" fill="none"
+                    stroke="url(#gg)" stroke-width="15" stroke-linecap="round"
+                    stroke-dasharray="{{ (2*3.14159*80)|round }}"
+                    stroke-dashoffset="{{ (2*3.14159*80)|round }}"
+                    id="gauge-arc"
+                    style="transform-origin:center;transform:rotate(-90deg)"/>
+          </svg>
+          <div class="gauge-txt">
+            <div id="result-val" data-score="{{ res.score }}"></div>
+            <strong style="font-size:2.5rem;font-weight:900;color:#fff;line-height:1">{{ res.score }}</strong>
+            <span style="font-size:.72rem;color:var(--txt3);text-transform:uppercase">out of 100</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loan details -->
+      <div class="res-grid">
+        {% for lbl,val,color in [
+          ('Loan Amount', '₹{:,.0f}'.format(app.amount), '#fff'),
+          ('Monthly EMI', '₹{:,.0f}'.format(res.emi), 'var(--ph)'),
+          ('Interest Rate', '{}% p.a.'.format(res.rate), '#fff'),
+          ('Total Payable', '₹{:,.0f}'.format(res.total), '#fff'),
+          ('Total Interest', '₹{:,.0f}'.format(res.interest), 'var(--orange)'),
+          ('Term', '{} months'.format(app.term), '#fff'),
+        ] %}
+        <div class="res-item"><span>{{ lbl }}</span><strong style="color:{{ color }}">{{ val }}</strong></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right: Factors + Next Steps -->
+    <div>
+      {% if res.ok %}
+      <div class="card mb16">
+        <h4 style="color:#86efac;margin-bottom:12px">✅ Positive Factors</h4>
+        <ul class="factor-list">
+          {% for r in res.ok %}<li class="f-ok"><span>✓</span> {{ r }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if res.warn %}
+      <div class="card mb16">
+        <h4 style="color:#fdba74;margin-bottom:12px">⚠️ Risk Flags</h4>
+        <ul class="factor-list">
+          {% for w in res.warn %}<li class="f-warn"><span>⚠</span> {{ w }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Next Steps -->
+      <div class="card">
+        <h4 style="color:#fff;margin-bottom:14px">🚀 Next Steps</h4>
+        {% if res.status == 'APPROVED' %}
+        {% for s in ['Upload KYC & income documents','Visit nearest branch or book online appointment','Sign loan agreement digitally','Funds disbursed in 3–5 business days'] %}
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:.84rem;color:var(--txt2)">
+          <span style="width:24px;height:24px;border-radius:50%;background:rgba(34,197,94,.18);color:#86efac;display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:800;flex-shrink:0">{{ loop.index }}</span>
+          {{ s }}
+        </div>
+        {% endfor %}
+        {% elif res.status == 'CONDITIONAL' %}
+        {% for t in ['Add a co-applicant with strong income','Reduce existing EMI obligations first','Provide additional income/asset proof','Opt for shorter loan tenure'] %}
+        <div style="display:flex;gap:9px;font-size:.84rem;color:var(--txt2);margin-bottom:8px"><span style="color:var(--gold)">→</span>{{ t }}</div>
+        {% endfor %}
+        {% else %}
+        {% for t in ['Improve CIBIL score above 700 first','Clear all existing dues and defaults','Apply for a smaller loan amount','Add a co-applicant','Re-apply after 6 months'] %}
+        <div style="display:flex;gap:9px;font-size:.84rem;color:var(--txt2);margin-bottom:8px"><span style="color:var(--red)">✕</span>{{ t }}</div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <a href="{{ url_for('loan_start') }}" class="btn btn-primary">+ Apply Again</a>
+    <a href="{{ url_for('loan_documents') }}" class="btn btn-cyan">📁 Upload Documents</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">← Dashboard</a>
+    <a href="{{ url_for('history') }}" class="btn btn-ghost">📜 History</a>
+  </div>
+</div>
+{% endblock %}

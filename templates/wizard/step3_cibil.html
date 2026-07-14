@@ -1,0 +1,156 @@
+{% extends 'base.html' %}{% block title %}CIBIL Score Check{% endblock %}
+{% block content %}
+<div class="wizard-wrap fade">
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step-item done"><div class="step-circle done">✓</div><span class="step-label">Loan Type</span></div>
+    <div class="step-line done"></div>
+    <div class="step-item done"><div class="step-circle done">✓</div><span class="step-label">Details</span></div>
+    <div class="step-line done"></div>
+    <div class="step-item active"><div class="step-circle active">3</div><span class="step-label">CIBIL</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">4</div><span class="step-label">Documents</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-circle wait">5</div><span class="step-label">Result</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:{% if result %}1fr 1fr{% else %}1fr{% endif %};gap:22px;{% if not result %}max-width:520px;margin:0 auto{% endif %}">
+
+    <!-- Form -->
+    <div>
+      <div class="card">
+        <h2 style="color:#fff;margin-bottom:6px">Step 3 – CIBIL Score Check</h2>
+        <p style="font-size:.86rem;margin-bottom:22px">We verify your credit score using your PAN details.</p>
+
+        <form method="POST" action="{{ url_for('loan_cibil') }}" id="cibilForm">
+          <div class="form-group">
+            <label>Full Name (as on PAN)</label>
+            <div class="icon-inp"><span class="ic">👤</span>
+              <input type="text" name="full_name" class="inp" placeholder="ALEX JOHNSON"
+                     value="{{ result.name if result else user.get('name','') }}" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>PAN Number</label>
+            <div class="icon-inp"><span class="ic">💳</span>
+              <input type="text" name="pan" class="inp" data-pan
+                     placeholder="ABCDE1234F" maxlength="10"
+                     value="{{ result.pan if result else user.get('pan','') }}" required/>
+            </div>
+            <div class="hint">10-char PAN: 5 letters + 4 digits + 1 letter</div>
+          </div>
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" name="dob" class="inp"
+                   value="{{ result.dob if result else '' }}"/>
+          </div>
+
+          <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:9px;padding:12px 14px;font-size:.8rem;color:#fcd34d;margin-bottom:18px">
+            ⚠️ <strong>Demo mode:</strong> Score is simulated from PAN for educational purposes.
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="cibilBtn">
+            🔍 Check CIBIL Score
+          </button>
+        </form>
+
+        {% if result %}
+        <div style="margin-top:14px">
+          <a href="{{ url_for('loan_documents') }}" class="btn btn-success btn-full">
+            ✅ Score Checked – Continue to Documents →
+          </a>
+        </div>
+        {% else %}
+        <div style="margin-top:14px">
+          <a href="{{ url_for('loan_documents') }}" class="btn btn-ghost btn-full btn-sm">
+            Skip CIBIL Check → Go to Documents
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- CIBIL scale info -->
+      <div class="card mt16">
+        <h4 style="color:#fff;margin-bottom:12px;font-size:.88rem">📊 CIBIL Score Scale</h4>
+        <div style="display:flex;gap:5px;margin-bottom:8px">
+          {% for c,lbl in [('#ef4444','Poor'),('#f97316','Bad'),('#facc15','Fair'),('#86efac','Good'),('#22c55e','Excellent')] %}
+          <div style="flex:1;height:7px;background:{{ c }};border-radius:99px" title="{{ lbl }}"></div>
+          {% endfor %}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--txt3)">
+          <span>300</span><span>550</span><span>650</span><span>750</span><span>900</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    {% if result %}
+    <div class="fade">
+      <div class="card txt-c mb16">
+        <h3 style="color:#fff;margin-bottom:18px">Your CIBIL Score</h3>
+        <!-- Animated meter -->
+        <div style="position:relative;width:200px;height:200px;margin:0 auto 16px">
+          <svg width="200" height="200" viewBox="0 0 200 200">
+            <defs>
+              <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:{{ result.color }}"/>
+                <stop offset="100%" style="stop-color:{{ result.color }}88"/>
+              </linearGradient>
+            </defs>
+            <circle cx="100" cy="100" r="90" fill="none" stroke="var(--bg3)" stroke-width="16" style="transform-origin:center;transform:rotate(-90deg)"/>
+            <circle cx="100" cy="100" r="90" fill="none"
+                    stroke="url(#cg)" stroke-width="16" stroke-linecap="round"
+                    stroke-dasharray="{{ (2*3.14159*90)|round }}"
+                    stroke-dashoffset="{{ (2*3.14159*90)|round }}"
+                    id="cibil-arc"
+                    style="transform-origin:center;transform:rotate(-90deg)"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <strong id="cibil-val" data-score="{{ result.score }}" style="font-size:2.8rem;font-weight:900;color:{{ result.color }};line-height:1">{{ result.score }}</strong>
+            <span style="font-size:.72rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em">CIBIL Score</span>
+            <span style="font-size:1.05rem;font-weight:700;margin-top:4px;color:{{ result.color }}">{{ result.icon }} {{ result.grade }}</span>
+          </div>
+        </div>
+
+        <p style="font-size:.84rem;color:var(--txt2);margin-bottom:18px">
+          {% if result.score >= 750 %}Your profile is excellent. Best interest rates available.
+          {% elif result.score >= 700 %}Good credit profile. Most lenders will approve.
+          {% elif result.score >= 650 %}Fair score. Higher interest rate may apply.
+          {% else %}Low score. Consider improving before applying.{% endif %}
+        </p>
+
+        <!-- Score factors -->
+        <div style="text-align:left">
+          <h4 style="color:#fff;margin-bottom:12px;font-size:.86rem">Score Factors</h4>
+          {% for name,val,sub in (
+            [("Payment History","Excellent","95%"),("Credit Utilisation","Low","22%"),("Credit Age","Long","8 yrs"),("New Inquiries","Minimal","2")]
+            if result.score >= 750 else
+            [("Payment History","Good","82%"),("Credit Utilisation","Moderate","40%"),("Credit Age","Medium","5 yrs"),("New Inquiries","Low","4")]
+            if result.score >= 700 else
+            [("Payment History","Fair","68%"),("Credit Utilisation","High","58%"),("Credit Age","Short","2 yrs"),("New Inquiries","High","8")]
+          ) %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px;margin-bottom:6px;font-size:.82rem">
+            <span style="color:var(--txt2)">{{ name }}</span>
+            <span style="font-weight:700;color:#fff">{{ val }} <span style="color:var(--txt3)">({{ sub }})</span></span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <a href="{{ url_for('loan_documents') }}" class="btn btn-success btn-full btn-lg">
+        Continue to Upload Documents →
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('cibilBtn')?.addEventListener('click', function() {
+  const pan = document.querySelector('[data-pan]').value;
+  if (pan.length !== 10) { alert('Please enter a valid 10-character PAN number.'); return; }
+});
+</script>
+{% endblock %}

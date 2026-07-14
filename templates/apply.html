@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% block title %}Apply for Loan – LoanPro AI{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="container">
+    <h1>Apply for a Loan</h1>
+    <p>Fill in the details below and get your AI-powered eligibility prediction instantly.</p>
+  </div>
+</div>
+
+<div class="apply-wrap">
+
+  <!-- Loan Type Tabs -->
+  <div class="loan-type-tabs">
+    {% for icon, label, ltype in [
+      ('🚗','Car','car'),('🏠','Home','home'),('💳','Personal','personal'),
+      ('🎓','Education','education'),('💼','Business','business'),
+      ('🥇','Gold','gold'),('🏥','Medical','medical'),
+    ] %}
+    <a href="{{ url_for('apply') }}?type={{ ltype }}"
+       class="lt-tab {% if loan_type == ltype %}active{% endif %}"
+       data-type="{{ ltype }}">
+      {{ icon }} {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Step indicator -->
+  <div class="step-indicator mb-32">
+    <div class="step active">
+      <div class="step-num">1</div>
+      <span class="step-label">Loan Details</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <span class="step-label">Personal Info</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <span class="step-label">Result</span>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('apply') }}" id="applyForm">
+    <input type="hidden" name="loan_type" id="loan_type_input" value="{{ loan_type }}"/>
+
+    <!-- ── LOAN DETAILS ── -->
+    <div class="card mb-24" id="step1">
+      <h3 style="color:#fff;margin-bottom:20px">
+        {% set icons = {'car':'🚗','home':'🏠','personal':'💳','education':'🎓','business':'💼','gold':'🥇','medical':'🏥'} %}
+        {{ icons.get(loan_type, '💳') }}
+        {% set labels = {'car':'Car Loan','home':'Home Loan','personal':'Personal Loan','education':'Education Loan','business':'Business Loan','gold':'Gold Loan','medical':'Medical Loan'} %}
+        {{ labels.get(loan_type, 'Loan') }} Application
+      </h3>
+
+      <!-- Loan Amount Slider -->
+      <div class="form-group">
+        <label>Loan Amount</label>
+        {% set limits = {
+          'car': (50000, 2000000, 500000),
+          'home': (500000, 10000000, 2000000),
+          'personal': (10000, 500000, 100000),
+          'education': (50000, 2000000, 300000),
+          'business': (100000, 5000000, 500000),
+          'gold': (10000, 500000, 100000),
+          'medical': (10000, 300000, 50000),
+        } %}
+        {% set min_a, max_a, def_a = limits.get(loan_type, (10000, 500000, 100000)) %}
+        <div class="range-slider-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:.83rem;color:var(--text3)">₹{{ '{:,.0f}'.format(min_a) }}</span>
+            <span class="value-display range-val" id="amtDisplay">₹{{ '{:,.0f}'.format(def_a) }}</span>
+            <span style="font-size:.83rem;color:var(--text3)">₹{{ '{:,.0f}'.format(max_a) }}</span>
+          </div>
+          <input type="range" name="loan_amount" id="loan_amount" class="range-input range-slider-group"
+                 min="{{ min_a }}" max="{{ max_a }}" step="{{ (max_a - min_a) // 100 }}" value="{{ def_a }}"
+                 data-prefix="₹" data-format="currency"/>
+        </div>
+        <!-- hidden number input synced with slider -->
+      </div>
+
+      <!-- Loan Term Slider -->
+      <div class="form-group">
+        <label>Loan Term</label>
+        {% set max_term = 360 if loan_type == 'home' else 84 if loan_type in ['car','business'] else 60 %}
+        <div class="range-slider-group">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:.83rem;color:var(--text3)">6 months</span>
+            <span class="value-display range-val">12 months</span>
+            <span style="font-size:.83rem;color:var(--text3)">{{ max_term }} months</span>
+          </div>
+          <input type="range" name="loan_term" id="loan_term" class="range-input"
+                 min="6" max="{{ max_term }}" step="6" value="12"
+                 data-prefix="" data-suffix=" months"/>
+        </div>
+      </div>
+
+      <!-- EMI Preview -->
+      <div class="emi-preview" data-base-rate="{{ {'car':9.5,'home':8.5,'personal':12.5,'education':7.5,'business':13.5,'gold':9.0,'medical':11.5}.get(loan_type, 12) }}">
+        <div>
+          <strong id="preview-emi">—</strong>
+          <span>Monthly EMI</span>
+        </div>
+        <div>
+          <strong id="preview-total">—</strong>
+          <span>Total Payable</span>
+        </div>
+        <div>
+          <strong id="preview-interest">—</strong>
+          <span>Total Interest</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PERSONAL DETAILS ── -->
+    <div class="card mb-24">
+      <h3 style="color:#fff;margin-bottom:20px">👤 Personal Details</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="full_name" class="form-control" placeholder="Alex Johnson" required/>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" name="age" class="form-control" placeholder="30" min="18" max="75" required/>
+        </div>
+        <div class="form-group">
+          <label>Annual Income (₹)</label>
+          <input type="number" name="annual_income" class="form-control" placeholder="600000" min="0" required/>
+          <div class="form-hint">Include salary, business income, rentals, etc.</div>
+        </div>
+        <div class="form-group">
+          <label>Employment Type</label>
+          <select name="employment_type" class="form-control" required>
+            <option value="salaried">Salaried (Government)</option>
+            <option value="salaried" selected>Salaried (Private)</option>
+            <option value="self_employed">Self-Employed</option>
+            <option value="business">Business Owner</option>
+            <option value="freelance">Freelancer</option>
+            <option value="retired">Retired</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Credit Score (CIBIL)</label>
+          <input type="number" name="credit_score" class="form-control" placeholder="700" min="300" max="900"/>
+          <div class="form-hint">Leave blank if unknown &nbsp;·&nbsp; <a href="{{ url_for('cibil') }}">Check your score</a></div>
+        </div>
+        <div class="form-group">
+          <label>Existing EMI / Month (₹)</label>
+          <input type="number" name="existing_emi" class="form-control" placeholder="0" min="0" value="0"/>
+          <div class="form-hint">Any current loan EMIs you are paying</div>
+        </div>
+      </div>
+
+      {% if loan_type == 'car' %}
+      <h4 style="color:#fff;margin:20px 0 16px;font-size:.95rem">🚗 Vehicle Details</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Vehicle Type</label>
+          <select name="vehicle_type" class="form-control">
+            <option>Hatchback</option><option>Sedan</option><option>SUV</option>
+            <option>Luxury</option><option>EV / Hybrid</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vehicle Condition</label>
+          <select name="vehicle_condition" class="form-control">
+            <option value="new">New Vehicle</option>
+            <option value="used">Used Vehicle</option>
+          </select>
+        </div>
+      </div>
+      {% elif loan_type == 'home' %}
+      <h4 style="color:#fff;margin:20px 0 16px;font-size:.95rem">🏠 Property Details</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Property Type</label>
+          <select name="property_type" class="form-control">
+            <option>Apartment</option><option>Independent House</option>
+            <option>Villa</option><option>Plot + Construction</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Property Value (₹)</label>
+          <input type="number" name="property_value" class="form-control" placeholder="5000000"/>
+        </div>
+      </div>
+      {% elif loan_type == 'education' %}
+      <h4 style="color:#fff;margin:20px 0 16px;font-size:.95rem">🎓 Education Details</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Course / Program</label>
+          <input type="text" name="course" class="form-control" placeholder="B.Tech / MBA / MBBS"/>
+        </div>
+        <div class="form-group">
+          <label>Institution Name</label>
+          <input type="text" name="institution" class="form-control" placeholder="IIT Delhi / AIIMS"/>
+        </div>
+      </div>
+      {% elif loan_type == 'business' %}
+      <h4 style="color:#fff;margin:20px 0 16px;font-size:.95rem">💼 Business Details</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Business Type</label>
+          <select name="business_type" class="form-control">
+            <option>Sole Proprietorship</option><option>Partnership</option>
+            <option>LLP</option><option>Pvt. Ltd.</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Years in Business</label>
+          <input type="number" name="years_business" class="form-control" placeholder="3" min="0"/>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+      🤖 Predict My Loan Eligibility
+    </button>
+    <p style="font-size:.78rem;color:var(--text3);text-align:center;margin-top:12px">
+      🔒 Your data is secure and never shared. For educational purposes only.
+    </p>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Sync range slider display
+document.querySelectorAll('input[type=range]').forEach(inp => {
+  const grp = inp.closest('.range-slider-group') || inp.parentElement;
+  const display = grp.querySelector('.range-val') || grp.previousElementSibling?.querySelector('.range-val');
+  const prefix = inp.dataset.prefix || '';
+  const suffix = inp.dataset.suffix || '';
+  function update() {
+    let v = parseFloat(inp.value);
+    if (prefix === '₹') {
+      let fmt;
+      if (v >= 10000000) fmt = '₹' + (v/10000000).toFixed(1) + ' Cr';
+      else if (v >= 100000) fmt = '₹' + (v/100000).toFixed(1) + ' L';
+      else fmt = '₹' + v.toLocaleString();
+      if (display) display.textContent = fmt;
+    } else {
+      if (display) display.textContent = prefix + v.toLocaleString() + suffix;
+    }
+    updateEMI();
+  }
+  inp.addEventListener('input', update);
+  update();
+});
+
+document.getElementById('applyForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="loading-spinner"></span> Analysing your profile...';
+  btn.disabled = true;
+  // Sync actual amount from slider
+  const slider = document.getElementById('loan_amount');
+  if (slider) slider.value = slider.value;
+});
+</script>
+{% endblock %}

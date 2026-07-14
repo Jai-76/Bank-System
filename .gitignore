@@ -1,40 +1,18 @@
-# Python
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
 *.pyd
-.Python
-*.egg-info/
-dist/
-build/
-.eggs/
-
-# Virtual environment
+.env
+.env.*
 venv/
 env/
 .venv/
-
-# Flask / SQLite database
-instance/
-*.db
-*.sqlite3
-
-# Uploaded files
-static/uploads/*
-!static/uploads/.gitkeep
-
-# Environment variables
-.env
-.env.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
+*.egg-info/
+dist/
+build/
 .DS_Store
 Thumbs.db
-
-.vercel
+static/uploads/*
+!static/uploads/.gitkeep
+*.log
+.vercel/

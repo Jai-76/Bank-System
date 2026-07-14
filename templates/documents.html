@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Documents – LoanPro AI{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="container">
+    <div class="flex items-center justify-between" style="flex-wrap:wrap;gap:16px">
+      <div class="flex items-center gap-16">
+        <span style="font-size:2rem">📁</span>
+        <div>
+          <h1>Document Vault</h1>
+          <p>Upload and manage your KYC and income documents securely</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container section-sm">
+  <div class="doc-page-grid">
+
+    <!-- ── UPLOAD FORM ── -->
+    <div>
+      <div class="card">
+        <h3 style="color:#fff;margin-bottom:6px">Upload Document</h3>
+        <p style="font-size:.85rem;margin-bottom:24px">
+          Supported: PDF, JPG, PNG, DOC, DOCX &nbsp;·&nbsp; Max size: 10 MB
+        </p>
+
+        <form method="POST" action="{{ url_for('documents') }}" enctype="multipart/form-data" id="uploadForm">
+
+          <div class="form-group">
+            <label>Document Type</label>
+            <select name="doc_type" class="form-control" required>
+              <option value="">— Select document type —</option>
+              <optgroup label="Identity Proof">
+                <option value="aadhaar">Aadhaar Card</option>
+                <option value="pan">PAN Card</option>
+                <option value="passport">Passport</option>
+                <option value="driving">Driving Licence</option>
+                <option value="voter">Voter ID</option>
+              </optgroup>
+              <optgroup label="Income Proof">
+                <option value="salary_slip">Salary Slip (Last 3 months)</option>
+                <option value="bank_statement">Bank Statement (6 months)</option>
+                <option value="itr">Income Tax Return (ITR)</option>
+                <option value="form16">Form 16</option>
+              </optgroup>
+              <optgroup label="Property / Asset">
+                <option value="property">Property Documents</option>
+                <option value="rc_book">RC Book (Vehicle)</option>
+                <option value="business_reg">Business Registration</option>
+              </optgroup>
+              <option value="other">Other Document</option>
+            </select>
+          </div>
+
+          <!-- Drag & Drop Zone -->
+          <div class="form-group">
+            <label>Select File</label>
+            <div class="upload-zone" id="uploadZone">
+              <span class="upload-icon">☁️</span>
+              <p>Drag & drop your file here, or <strong style="color:var(--primary-h)">click to browse</strong></p>
+              <small>PDF, PNG, JPG, DOC, DOCX · Max 10 MB</small>
+            </div>
+            <input type="file" name="document" id="docInput" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" style="display:none" required/>
+            <div id="fileName" style="margin-top:10px;font-size:.85rem;color:var(--text2)"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" id="uploadBtn">
+            ⬆️ Upload Document
+          </button>
+        </form>
+
+        <!-- Required docs info -->
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+          <h4 style="color:#fff;margin-bottom:12px;font-size:.9rem">📋 Documents Required for Loan</h4>
+          <div class="required-docs">
+            {% for icon, label in [
+              ('🪪','Aadhaar Card'),('💳','PAN Card'),('💰','Salary Slip'),
+              ('🏦','Bank Statement'),('📊','ITR / Form 16'),('🏠','Property Docs (for Home Loan)'),
+            ] %}
+            <div class="req-doc">
+              <span class="rd-icon">{{ icon }}</span>
+              <span>{{ label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── UPLOADED DOCUMENTS ── -->
+    <div>
+      <div class="flex items-center justify-between mb-16">
+        <h3 style="color:#fff">Uploaded Documents
+          <span class="badge badge-blue" style="margin-left:8px">{{ docs|length }}</span>
+        </h3>
+      </div>
+
+      {% if docs %}
+        {% for doc in docs %}
+        <div class="doc-card mb-16">
+          <div class="doc-icon">
+            {{ '📄' if doc.ext == 'pdf' else '🖼️' if doc.ext in ['jpg','jpeg','png'] else '📝' }}
+          </div>
+          <div class="doc-info">
+            <h4>{{ doc.label }}</h4>
+            <p>{{ doc.filename }}</p>
+            <p style="margin-top:3px">
+              {{ (doc.size / 1024) | round | int }} KB &nbsp;·&nbsp; {{ doc.uploaded }}
+            </p>
+            <div class="progress-bar" style="margin-top:8px">
+              <div class="progress-fill" style="width:100%"></div>
+            </div>
+          </div>
+          <div class="doc-actions" style="flex-direction:column;align-items:flex-end">
+            <span class="badge {{ 'badge-green' if doc.status == 'Verified' else 'badge-orange' }}" style="margin-bottom:8px">
+              {{ '✓' if doc.status == 'Verified' else '⏳' }} {{ doc.status }}
+            </span>
+            <a href="{{ url_for('delete_document', doc_id=doc.id) }}"
+               class="btn btn-danger btn-sm"
+               onclick="return confirm('Delete this document?')"
+               title="Delete">🗑️</a>
+          </div>
+        </div>
+        {% endfor %}
+
+        <!-- Checklist summary -->
+        <div class="card mt-24" style="padding:18px">
+          <h4 style="color:#fff;margin-bottom:14px;font-size:.88rem">✅ Document Completion</h4>
+          {% set uploaded_types = docs | map(attribute='type') | list %}
+          {% for key, label in doc_labels.items() %}
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(99,130,255,.07)">
+            <span style="font-size:1rem">{{ '✅' if key in uploaded_types else '⬜' }}</span>
+            <span style="font-size:.83rem;color:{{ '#fff' if key in uploaded_types else 'var(--text3)' }}">{{ label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="doc-empty card">
+          <span class="empty-icon">📂</span>
+          <h4 style="color:#fff;margin-bottom:8px">No Documents Yet</h4>
+          <p style="font-size:.88rem;margin-bottom:20px">Upload your KYC and income documents to speed up loan approval.</p>
+        </div>
+
+        <!-- Security badge -->
+        <div class="card" style="text-align:center;padding:24px">
+          <div style="font-size:2.5rem;margin-bottom:12px">🔒</div>
+          <h4 style="color:#fff;margin-bottom:8px">Bank-Grade Security</h4>
+          <p style="font-size:.83rem;color:var(--text3)">
+            All documents are encrypted with AES-256. Your data is never shared with third parties.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('uploadForm')?.addEventListener('submit', function(e) {
+  const btn = document.getElementById('uploadBtn');
+  btn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

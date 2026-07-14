@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}CIBIL Score Checker – LoanPro AI{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="container">
+    <div class="flex items-center gap-16" style="flex-wrap:wrap">
+      <span style="font-size:2rem">📊</span>
+      <div>
+        <h1>CIBIL / Credit Score Checker</h1>
+        <p>Check your credit score instantly using your PAN details</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container section-sm">
+  <div style="display:grid;grid-template-columns:{% if result %}1fr 1.2fr{% else %}1fr{% endif %};gap:28px;max-width:{% if result %}1100px{% else %}620px{% endif %};margin:0 auto">
+
+    <!-- ── FORM ── -->
+    <div>
+      <div class="card">
+        <h3 style="color:#fff;margin-bottom:6px">Enter Your Details</h3>
+        <p style="font-size:.85rem;margin-bottom:24px">We simulate your CIBIL score based on PAN number for demo purposes.</p>
+
+        <form method="POST" action="{{ url_for('cibil') }}" id="cibilForm">
+          <div class="form-group">
+            <label>Full Name (as on PAN)</label>
+            <div class="input-icon">
+              <span class="icon">👤</span>
+              <input type="text" name="full_name" class="form-control" placeholder="ALEX JOHNSON"
+                     value="{{ result.name if result }}" required/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>PAN Number</label>
+            <div class="input-icon">
+              <span class="icon">💳</span>
+              <input type="text" name="pan" id="pan_input" class="form-control"
+                     placeholder="ABCDE1234F" maxlength="10" data-pan
+                     value="{{ result.pan if result }}" required/>
+            </div>
+            <div class="form-hint">Format: 5 letters + 4 digits + 1 letter (e.g. ABCDE1234F)</div>
+          </div>
+
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <div class="input-icon">
+              <span class="icon">📅</span>
+              <input type="date" name="dob" class="form-control"
+                     value="{{ result.dob if result }}"/>
+            </div>
+          </div>
+
+          <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px;margin-bottom:20px;font-size:.82rem;color:#fcd34d">
+            ⚠️ <strong>Demo Mode:</strong> Scores are simulated for educational purposes. Not your actual CIBIL score.
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="cibilBtn">
+            🔍 Check My CIBIL Score
+          </button>
+        </form>
+      </div>
+
+      <!-- What is CIBIL -->
+      <div class="card mt-24">
+        <h4 style="color:#fff;margin-bottom:14px">📖 What is CIBIL Score?</h4>
+        <p style="font-size:.87rem;margin-bottom:16px">
+          A CIBIL Score (Credit Score) is a 3-digit number ranging from <strong style="color:#fff">300 to 900</strong>
+          that represents your creditworthiness. Higher is better.
+        </p>
+        <div class="cibil-scale">
+          <div class="cibil-scale-item" style="background:#ef4444" title="300-549 Poor"></div>
+          <div class="cibil-scale-item" style="background:#f97316" title="550-599 Bad"></div>
+          <div class="cibil-scale-item" style="background:#facc15" title="600-649 Fair"></div>
+          <div class="cibil-scale-item" style="background:#86efac" title="650-749 Good"></div>
+          <div class="cibil-scale-item" style="background:#22c55e" title="750-900 Excellent"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3);margin-top:6px">
+          <span>300 – Poor</span>
+          <span>600 – Fair</span>
+          <span>750 – Good</span>
+          <span>900 – Excellent</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RESULT ── -->
+    {% if result %}
+    <div class="fade-in">
+      <!-- Score Meter -->
+      <div class="card" style="text-align:center;margin-bottom:20px">
+        <h3 style="color:#fff;margin-bottom:20px">Your Credit Score</h3>
+        <div class="cibil-meter">
+          <svg width="240" height="240" viewBox="0 0 240 240">
+            <defs>
+              <linearGradient id="cibilGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:{{ result.color }}"/>
+                <stop offset="100%" style="stop-color:{{ result.color }}88"/>
+              </linearGradient>
+            </defs>
+            <circle cx="120" cy="120" r="90" fill="none" stroke="var(--bg3)" stroke-width="18"/>
+            <circle cx="120" cy="120" r="90" fill="none"
+                    stroke="url(#cibilGrad)" stroke-width="18"
+                    stroke-linecap="round"
+                    stroke-dasharray="{{ 2 * 3.14159 * 90 | round }}"
+                    stroke-dashoffset="{{ 2 * 3.14159 * 90 | round }}"
+                    id="cibil-circle"
+                    style="transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset 1.8s ease"/>
+          </svg>
+          <div class="cibil-score-text">
+            <div class="big" id="cibil-score-val" data-score="{{ result.score }}" style="color:{{ result.color }}">
+              {{ result.score }}
+            </div>
+            <div class="label">CIBIL Score</div>
+            <div class="grade" style="color:{{ result.color }}">
+              {{ result.icon }} {{ result.grade }}
+            </div>
+          </div>
+        </div>
+        <p style="font-size:.88rem;color:var(--text2);max-width:320px;margin:0 auto">{{ result.desc }}</p>
+
+        <div style="display:flex;gap:10px;margin-top:20px;justify-content:center;flex-wrap:wrap">
+          <a href="{{ url_for('apply') }}" class="btn btn-primary btn-sm">Apply for Loan</a>
+          <a href="{{ url_for('documents') }}" class="btn btn-ghost btn-sm">Upload Documents</a>
+        </div>
+      </div>
+
+      <!-- Score Factors -->
+      <div class="card mb-20">
+        <h4 style="color:#fff;margin-bottom:16px">📋 Score Factors</h4>
+        <div class="factors-grid">
+          {% for name, val, sub in result.factors %}
+          <div class="factor-card">
+            <div class="factor-name">{{ name }}</div>
+            <div class="factor-val">{{ val }}</div>
+            <div class="factor-sub">{{ sub }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Improvement Tips -->
+      <div class="card">
+        <h4 style="color:#fff;margin-bottom:16px">💡 How to Improve Your Score</h4>
+        <ul class="cibil-tips">
+          <li>Pay all EMIs and credit card bills on time — even a single missed payment hurts badly.</li>
+          <li>Keep credit card utilisation below 30% of your total credit limit.</li>
+          <li>Avoid applying for multiple loans or cards in a short period.</li>
+          <li>Maintain a healthy mix of secured (home, car) and unsecured (personal, credit card) credit.</li>
+          <li>Review your CIBIL report regularly for errors and dispute them promptly.</li>
+          {% if result.score < 700 %}
+          <li>Clear any outstanding dues or defaults immediately to prevent further damage.</li>
+          <li>Consider a secured credit card to rebuild your credit history.</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('cibilForm')?.addEventListener('submit', function(e) {
+  const btn = document.getElementById('cibilBtn');
+  const pan = document.getElementById('pan_input').value.trim();
+  if (pan.length !== 10) { e.preventDefault(); return; }
+  btn.innerHTML = '<span class="loading-spinner"></span> Checking...';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}
